@@ -7,554 +7,191 @@
 <meta name="description" content="Daily dev resources, tool scorecards, HN stories, and guides for indie hackers and solo builders.">
 <meta property="og:title" content="StillNotAThing — Developer Morning Page">
 <meta property="og:description" content="Tools, guides, and curated HN stories for indie hackers and solo builders.">
+<meta property="og:image" content="https://stillnotathing.com/og.png">
 <meta property="og:url" content="https://stillnotathing.com">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://stillnotathing.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg: #0a0a0f;
-  --surface: #111118;
-  --card: #13131f;
-  --border: #1e1e2e;
-  --text: #e8e8f0;
-  --muted: #6b6b80;
-  --accent: #00d4aa;
-  --accent2: #7c5cfc;
-  --up: #22c55e;
-  --down: #ef4444;
-  --warn: #f59e0b;
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#111118;--card:#13131f;--border:#1e1e2e;
+  --text:#e8e8f0;--muted:#6b6b80;--accent:#00d4aa;--accent2:#7c5cfc;
+  --up:#22c55e;--down:#ef4444;--warn:#f59e0b;
 }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
 
 /* HEADER */
-header {
-  background: rgba(10,10,15,0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.logo {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
-  color: var(--accent);
-  letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-icon {
-  width: 28px;
-  height: 28px;
-  background: var(--accent);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-}
-
-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-link {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: all 0.15s;
-}
-
-.nav-link:hover { color: var(--text); background: var(--surface); }
-.nav-link.active { color: var(--accent); }
-
-/* HERO */
-.hero {
-  padding: 40px 24px 32px;
-  border-bottom: 1px solid var(--border);
-}
-
-.hero-date {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 10px;
-}
-
-.hero-title {
-  font-size: clamp(2rem, 5vw, 3.2rem);
-  font-weight: 700;
-  letter-spacing: -1.5px;
-  line-height: 1.1;
-  margin-bottom: 10px;
-}
-
-.hero-title .cursor {
-  display: inline-block;
-  width: 3px;
-  height: 0.9em;
-  background: var(--accent);
-  margin-left: 4px;
-  vertical-align: middle;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
-
-.hero-sub {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-bottom: 24px;
-}
-
-/* STATS */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 0;
-}
-
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-}
-
-.stat-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--accent);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 0.72rem;
-  color: var(--muted);
-  text-transform: lowercase;
-}
-
-/* SECTIONS */
-.section {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.section-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-more {
-  font-size: 0.75rem;
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-/* GUIDE CARD */
-.guide-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 18px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.guide-card:hover { border-color: #2e2e40; }
-
-.guide-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.guide-tag {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(0,212,170,0.1);
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.guide-read {
-  font-size: 0.7rem;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.share-btn {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.share-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-.guide-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  line-height: 1.3;
-  margin-bottom: 8px;
-  color: var(--text);
-}
-
-.guide-desc {
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.empty-state {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 24px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-/* HN STORIES */
-.hn-item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.hn-item:last-child { border-bottom: none; }
-
-.hn-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--border);
-  font-weight: 700;
-  min-width: 18px;
-  margin-top: 3px;
-}
-
-.hn-content { flex: 1; }
-
-.hn-title {
-  font-size: 0.85rem;
-  color: var(--text);
-  line-height: 1.4;
-  margin-bottom: 4px;
-  text-decoration: none;
-  display: block;
-  cursor: pointer;
-}
-
-.hn-title:hover { color: var(--accent); }
-
-.hn-meta {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--muted);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.hn-italic {
-  font-style: italic;
-  color: var(--accent);
-  font-size: 0.65rem;
-  font-family: 'DM Sans', sans-serif;
-}
-
-/* TOOL CARDS */
-.tool-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tool-card:hover { border-color: #2e2e40; }
-.tool-card:last-child { margin-bottom: 0; }
-
-.tool-header {
-  padding: 14px 16px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.tool-left { display: flex; align-items: center; gap: 10px; }
-
-.tool-icon {
-  width: 32px;
-  height: 32px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-}
-
-.tool-name {
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.tool-cat {
-  font-size: 0.65rem;
-  color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.trend-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 100px;
-}
-
-.trend-up { background: rgba(34,197,94,0.1); color: var(--up); }
-.trend-down { background: rgba(239,68,68,0.1); color: var(--down); }
-.trend-flat { background: rgba(107,107,128,0.1); color: var(--muted); }
-
-.tool-scores { padding: 0 16px 4px; }
-
-.score-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.score-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  color: var(--muted);
-  width: 44px;
-}
-
-.score-track {
-  flex: 1;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.score-fill {
-  height: 100%;
-  border-radius: 2px;
-}
-
-.fill-dx { background: var(--accent); }
-.fill-price { background: var(--accent2); }
-.fill-rage { background: var(--down); }
-
-.score-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
-  width: 22px;
-  text-align: right;
-  color: var(--text);
-}
-
-.tool-happiness {
-  margin: 6px 16px 10px;
-  background: var(--surface);
-  border-radius: 6px;
-  padding: 7px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.happiness-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  color: var(--muted);
-}
-
-.happiness-score {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.happiness-score span {
-  font-size: 0.65rem;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.tool-vote {
-  border-top: 1px solid var(--border);
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.vote-label {
-  font-size: 0.65rem;
-  color: var(--muted);
-}
-
-.vote-btns { display: flex; gap: 6px; }
-
-.vote-btn {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 4px 10px;
-  border-radius: 5px;
-  font-size: 0.7rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.vote-btn:hover { border-color: var(--accent); color: var(--accent); }
-.vote-btn.voted { background: var(--accent); border-color: var(--accent); color: #000; }
+header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--accent);display:flex;align-items:center;gap:8px}
+.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.header-right{display:flex;align-items:center;gap:10px}
+.streak-badge{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--warn);padding:4px 10px;border-radius:100px;font-size:.72rem;font-family:'JetBrains Mono',monospace;cursor:pointer}
+.auth-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:7px;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;transition:all .15s}
+.auth-btn:hover{border-color:var(--accent);color:var(--accent)}
+.user-avatar{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);cursor:pointer}
 
 /* TICKER */
-.ticker {
-  background: rgba(0,212,170,0.05);
-  border-bottom: 1px solid rgba(0,212,170,0.1);
-  padding: 8px 24px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  overflow: hidden;
-}
+.ticker{background:rgba(0,212,170,.04);border-bottom:1px solid rgba(0,212,170,.1);padding:7px 20px;display:flex;align-items:center;gap:10px;overflow:hidden}
+.ticker-live{background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.ticker-wrap{overflow:hidden;flex:1}
+.ticker-scroll{display:flex;gap:24px;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);white-space:nowrap;animation:tickerMove 40s linear infinite}
+@keyframes tickerMove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.t-up{color:var(--up)}.t-down{color:var(--down)}.t-warn{color:var(--warn)}
 
-.ticker-live {
-  background: var(--accent);
-  color: #000;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  letter-spacing: 0.5px;
-}
+/* HERO */
+.hero{padding:32px 20px 24px;border-bottom:1px solid var(--border)}
+.hero-date{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.hero-title{font-size:clamp(1.8rem,5vw,3rem);font-weight:700;letter-spacing:-1px;line-height:1.1;margin-bottom:8px}
+.cursor{display:inline-block;width:3px;height:.85em;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink 1s infinite}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.hero-sub{color:var(--muted);font-size:.88rem;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1;margin-bottom:3px}
+.stat-label{font-size:.65rem;color:var(--muted)}
 
-.ticker-scroll {
-  display: flex;
-  gap: 24px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  color: var(--muted);
-  white-space: nowrap;
-  animation: scroll 30s linear infinite;
-}
+/* NAV TABS */
+.nav-tabs{display:flex;gap:2px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto}
+.nav-tab{padding:10px 16px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-tab:hover{color:var(--text)}
 
-@keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
+/* SECTIONS */
+.page{display:none;padding:20px}.page.active{display:block}
+.section{margin-bottom:24px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.section-more{font-size:.72rem;color:var(--accent);cursor:pointer;font-weight:500}
 
-.t-up { color: var(--up); }
-.t-down { color: var(--down); }
-.t-warn { color: var(--warn); }
+/* GUIDE CARD */
+.guide-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .15s;margin-bottom:10px}
+.guide-card:hover{border-color:#2e2e40}
+.guide-card:last-child{margin-bottom:0}
+.guide-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.guide-tag{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:3px;background:rgba(0,212,170,.1);color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.guide-actions{display:flex;gap:6px;align-items:center}
+.guide-title{font-size:.95rem;font-weight:700;line-height:1.3;margin-bottom:6px;color:var(--text)}
+.guide-desc{font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.guide-meta{display:flex;gap:12px;align-items:center;font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.read-badge{background:rgba(34,197,94,.1);color:var(--up);padding:2px 6px;border-radius:3px;font-size:.6rem}
 
-/* RAGE BADGE */
-.rage-badge {
-  margin: 0 16px 10px;
-  background: rgba(239,68,68,0.06);
-  border: 1px solid rgba(239,68,68,0.15);
-  color: var(--down);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+/* ACTION BUTTONS */
+.btn-icon{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:5px;font-size:.7rem;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent)}
+.btn-icon.active{background:rgba(0,212,170,.1);border-color:var(--accent);color:var(--accent)}
+.btn-icon.bookmarked{background:rgba(245,158,11,.1);border-color:var(--warn);color:var(--warn)}
 
-/* LOADING */
-.loading {
-  text-align: center;
-  padding: 20px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-family: 'JetBrains Mono', monospace;
-}
+/* HN */
+.hn-item{padding:11px 0;border-bottom:1px solid var(--border);display:flex;gap:8px}
+.hn-item:last-child{border-bottom:none}
+.hn-num{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--border);font-weight:700;min-width:16px;margin-top:2px}
+.hn-content{flex:1}
+.hn-title{font-size:.82rem;color:var(--text);line-height:1.4;margin-bottom:3px;cursor:pointer;text-decoration:none;display:block}
+.hn-title:hover{color:var(--accent)}
+.hn-meta{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hn-comment{font-style:italic;color:var(--accent);font-family:'DM Sans',sans-serif}
+
+/* TOOL CARD */
+.tool-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;transition:all .15s}
+.tool-card:hover{border-color:#2e2e40}
+.tool-header{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between}
+.tool-left{display:flex;align-items:center;gap:8px}
+.tool-icon{width:30px;height:30px;background:var(--surface);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.tool-name{font-weight:700;font-size:.88rem}
+.tool-cat{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.trend-badge{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:100px}
+.trend-up{background:rgba(34,197,94,.1);color:var(--up)}
+.trend-down{background:rgba(239,68,68,.1);color:var(--down)}
+.trend-flat{background:rgba(107,107,128,.1);color:var(--muted)}
+.tool-scores{padding:0 14px 2px}
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.score-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);width:40px}
+.score-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.score-fill{height:100%;border-radius:2px}
+.fill-dx{background:var(--accent)}.fill-price{background:var(--accent2)}.fill-rage{background:var(--down)}
+.score-val{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;width:20px;text-align:right}
+.tool-happiness{margin:5px 14px 8px;background:var(--surface);border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between}
+.happiness-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted)}
+.happiness-score{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:5px}
+.happiness-score span{font-size:.62rem;color:var(--muted);font-weight:400}
+.tool-footer{border-top:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;justify-content:space-between}
+.vote-label{font-size:.62rem;color:var(--muted)}
+.vote-btns{display:flex;gap:5px}
+.vote-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:5px;font-size:.68rem;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.vote-btn:hover{border-color:var(--accent);color:var(--accent)}
+.vote-btn.voted-love{background:rgba(0,212,170,.1);border-color:var(--accent);color:var(--accent)}
+.vote-btn.voted-hate{background:rgba(239,68,68,.1);border-color:var(--down);color:var(--down)}
+.rage-note{margin:0 14px 8px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);color:var(--down);border-radius:5px;padding:5px 8px;font-size:.68rem;display:flex;align-items:center;gap:5px}
+
+/* EMPTY / LOADING */
+.empty{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem}
+.loading{text-align:center;padding:20px;color:var(--muted);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+
+/* STREAK MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:320px;width:90%;text-align:center}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.modal-sub{font-size:.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.modal-close{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px 20px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem}
+
+/* COMMENTS */
+#comments-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.comments-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:16px}
+
+/* PROFILE PAGE */
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.profile-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.profile-avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--accent)}
+.profile-name{font-size:1.05rem;font-weight:700}
+.profile-handle{font-size:.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.profile-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.profile-stat-num{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--accent)}
+.profile-stat-label{font-size:.62rem;color:var(--muted)}
+.stack-tags{display:flex;gap:6px;flex-wrap:wrap}
+.stack-tag{background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.2);color:var(--accent);padding:4px 10px;border-radius:5px;font-size:.72rem;font-family:'JetBrains Mono',monospace}
+
+/* BADGE */
+.badge-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.badge-title{font-size:.82rem;font-weight:700;margin-bottom:8px}
+.badge-code{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);word-break:break-all;margin-bottom:8px}
+
+/* SUBMIT TOOL */
+.submit-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.form-select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none}
+.btn-submit{background:var(--accent);border:none;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%}
+
+/* NEWSLETTER */
+.newsletter-bar{background:rgba(124,92,252,.06);border:1px solid rgba(124,92,252,.15);border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.newsletter-text{font-size:.8rem;color:var(--text);flex:1;min-width:160px}
+.newsletter-text span{color:var(--accent2);font-weight:600}
+.newsletter-input-wrap{display:flex;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface)}
+.newsletter-input{background:none;border:none;padding:8px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;min-width:160px}
+.newsletter-btn{background:var(--accent2);border:none;color:#fff;padding:8px 14px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+/* PUSH BANNER */
+.push-banner{background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.push-text{font-size:.78rem;color:var(--muted)}
+.push-btn{background:var(--accent);border:none;color:#000;padding:6px 14px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
 
 /* FOOTER */
-footer {
-  padding: 24px;
-  border-top: 1px solid var(--border);
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-family: 'JetBrains Mono', monospace;
-}
+footer{padding:20px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:.72rem;font-family:'JetBrains Mono',monospace}
+footer a{color:var(--accent);text-decoration:none}
 
-footer a { color: var(--accent); text-decoration: none; }
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:8px;font-size:.8rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* LOGIN PROMPT */
+.login-prompt{background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:8px;padding:12px;text-align:center;font-size:.78rem;color:var(--muted);margin-top:8px}
+.login-prompt a{color:var(--accent);cursor:pointer}
 </style>
 </head>
 <body>
@@ -564,290 +201,757 @@ footer a { color: var(--accent); text-decoration: none; }
     <div class="logo-icon">⚡</div>
     StillNotAThing
   </div>
-  <nav>
-    <a href="#" class="nav-link active">Home</a>
-    <a href="#tools" class="nav-link">Tools</a>
-    <a href="#guides" class="nav-link">Guides</a>
-  </nav>
+  <div class="header-right">
+    <div class="streak-badge" id="streak-display" onclick="showStreakModal()" style="display:none">🔥 <span id="streak-count">0</span> day streak</div>
+    <div id="auth-area">
+      <button class="auth-btn" onclick="loginWithGitHub()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Sign in with GitHub
+      </button>
+    </div>
+  </div>
 </header>
 
-<!-- TICKER -->
 <div class="ticker">
   <div class="ticker-live">LIVE</div>
-  <div class="ticker-scroll" id="ticker-content">
-    <span><span class="t-up">↑</span> Supabase happiness rising this week</span>
-    <span>•</span>
-    <span><span class="t-warn">⚠</span> Vercel pricing changes — community reacting</span>
-    <span>•</span>
-    <span><span class="t-down">↓</span> PlanetScale rage index spiking</span>
-    <span>•</span>
-    <span><span class="t-up">↑</span> Railway gaining fast among solo builders</span>
-    <span>•</span>
-    <span>📊 Community votes updating daily</span>
-    <span>•</span>
-    <span><span class="t-up">↑</span> Supabase happiness rising this week</span>
-    <span>•</span>
-    <span><span class="t-warn">⚠</span> Vercel pricing changes — community reacting</span>
-    <span>•</span>
-    <span><span class="t-down">↓</span> PlanetScale rage index spiking</span>
-    <span>•</span>
-    <span><span class="t-up">↑</span> Railway gaining fast among solo builders</span>
-    <span>•</span>
-    <span>📊 Community votes updating daily</span>
+  <div class="ticker-wrap">
+    <div class="ticker-scroll">
+      <span><span class="t-up">↑</span> Supabase happiness rising</span>
+      <span>•</span><span><span class="t-warn">⚠</span> Vercel pricing changes</span>
+      <span>•</span><span><span class="t-down">↓</span> PlanetScale rage spiking</span>
+      <span>•</span><span><span class="t-up">↑</span> Railway gaining fast</span>
+      <span>•</span><span>📊 Community votes updating daily</span>
+      <span>•</span><span><span class="t-up">↑</span> Supabase happiness rising</span>
+      <span>•</span><span><span class="t-warn">⚠</span> Vercel pricing changes</span>
+      <span>•</span><span><span class="t-down">↓</span> PlanetScale rage spiking</span>
+      <span>•</span><span><span class="t-up">↑</span> Railway gaining fast</span>
+      <span>•</span><span>📊 Community votes updating daily</span>
+    </div>
   </div>
 </div>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-date" id="hero-date">MORNING BRIEFING // Loading...</div>
   <h1 class="hero-title">What's shipping today<span class="cursor"></span></h1>
-  <p class="hero-sub">Tools, guides, and curated HN stories for indie hackers and solo builders.</p>
+  <p class="hero-sub">Tools, guides, and curated HN stories for indie hackers.</p>
   <div class="stats">
-    <div class="stat-card">
-      <div class="stat-num" id="stat-tools">—</div>
-      <div class="stat-label">tools indexed</div>
+    <div class="stat-card"><div class="stat-num" id="stat-tools">—</div><div class="stat-label">tools indexed</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-guides">—</div><div class="stat-label">guides</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-hn">10</div><div class="stat-label">hn stories</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-happiness">—</div><div class="stat-label">avg happiness</div></div>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showPage('home')">🏠 Home</div>
+  <div class="nav-tab" onclick="showPage('tools')">📊 Tools</div>
+  <div class="nav-tab" onclick="showPage('guides')">📖 Guides</div>
+  <div class="nav-tab" onclick="showPage('hn')">📰 HN Feed</div>
+  <div class="nav-tab" onclick="showPage('bookmarks')">🔖 Saved</div>
+  <div class="nav-tab" onclick="showPage('profile')">👤 Profile</div>
+</div>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div id="push-banner-container"></div>
+  <div id="newsletter-container"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📖 Today's Guide</div>
+      <span class="section-more" onclick="showPage('guides')">all guides →</span>
     </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-guides">—</div>
-      <div class="stat-label">guides published</div>
+    <div id="home-guide-container"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📰 Curated HN</div>
+      <span class="section-more" onclick="showPage('hn')">all stories →</span>
     </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-hn">10</div>
-      <div class="stat-label">hn stories</div>
+    <div id="home-hn-container"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📈 Top Tools</div>
+      <span class="section-more" onclick="showPage('tools')">all →</span>
     </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-happiness">—</div>
-      <div class="stat-label">avg happiness</div>
+    <div id="home-tools-container"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<!-- TOOLS PAGE -->
+<div class="page" id="page-tools">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📊 Tool Stack Index</div>
+      <span class="section-more" onclick="showPage('submit')">+ Submit Tool</span>
+    </div>
+    <div id="tools-page-container"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<!-- GUIDES PAGE -->
+<div class="page" id="page-guides">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📖 All Guides</div>
+    </div>
+    <div id="guides-page-container"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<!-- HN FEED PAGE -->
+<div class="page" id="page-hn">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📰 Hacker News Top Stories</div>
+    </div>
+    <div id="hn-page-container"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<!-- BOOKMARKS PAGE -->
+<div class="page" id="page-bookmarks">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🔖 Saved Articles</div>
+    </div>
+    <div id="bookmarks-container">
+      <div class="empty">Sign in with GitHub to save articles 📌</div>
     </div>
   </div>
 </div>
 
-<!-- TODAY'S GUIDE -->
-<div class="section" id="guides">
-  <div class="section-header">
-    <div class="section-title">📖 Today's Guide</div>
-    <a href="#" class="section-more">all guides →</a>
-  </div>
-  <div id="guide-container">
-    <div class="loading">Loading guide...</div>
+<!-- PROFILE PAGE -->
+<div class="page" id="page-profile">
+  <div id="profile-container">
+    <div class="empty">Sign in with GitHub to see your profile 👤</div>
   </div>
 </div>
 
-<!-- CURATED HN -->
-<div class="section">
-  <div class="section-header">
-    <div class="section-title">📰 Curated HN</div>
-    <a href="#" class="section-more">all stories →</a>
-  </div>
-  <div id="hn-container">
-    <div class="loading">Loading stories...</div>
-  </div>
-</div>
-
-<!-- TOP TOOLS -->
-<div class="section" id="tools">
-  <div class="section-header">
-    <div class="section-title">📈 Top Tools</div>
-    <a href="#" class="section-more">all →</a>
-  </div>
-  <div id="tools-container">
-    <div class="loading">Loading tools...</div>
+<!-- SUBMIT TOOL PAGE -->
+<div class="page" id="page-submit">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">➕ Submit a Tool</div>
+    </div>
+    <div class="submit-form">
+      <div class="form-group">
+        <label class="form-label">Tool Name</label>
+        <input class="form-input" id="submit-name" placeholder="e.g. Railway">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="submit-category">
+          <option value="hosting">Hosting</option>
+          <option value="database">Database</option>
+          <option value="payments">Payments</option>
+          <option value="auth">Auth</option>
+          <option value="email">Email</option>
+          <option value="devtools">DevTools</option>
+          <option value="monitoring">Monitoring</option>
+          <option value="storage">Storage</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Website URL</label>
+        <input class="form-input" id="submit-url" placeholder="https://railway.app">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Why do indie hackers use it?</label>
+        <input class="form-input" id="submit-desc" placeholder="Simple deployment, usage-based pricing...">
+      </div>
+      <button class="btn-submit" onclick="submitTool()">Submit Tool →</button>
+    </div>
   </div>
 </div>
 
 <footer>
-  <div>StillNotAThing — Daily dev resources for indie hackers</div>
-  <div style="margin-top:8px">Built with ❤️ for solo builders · <a href="#">Submit a tool</a> · <a href="#">Newsletter</a></div>
+  <div>StillNotAThing.com — Daily dev resources for indie hackers</div>
+  <div style="margin-top:6px"><a href="#" onclick="showPage('submit')">Submit a tool</a> · <a href="https://github.com/jammiejammmie/stillnotathing-dev" target="_blank">GitHub</a></div>
 </footer>
 
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="streak-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;margin-bottom:10px">🔥</div>
+    <div class="modal-title" id="streak-modal-title">Streak!</div>
+    <div class="modal-sub" id="streak-modal-sub">Keep coming back daily.</div>
+    <button class="modal-close" onclick="closeModal()">Got it!</button>
+  </div>
+</div>
+
 <script>
-// DATE
+const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let userBookmarks = new Set();
+let userVotes = {};
+let userReadHistory = new Set();
+let hnStoriesCache = [];
+
+// ── DATE ──
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const now = new Date();
 document.getElementById('hero-date').textContent = `MORNING BRIEFING // ${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
 
-// SHARE
+// ── NAV ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const page = document.getElementById('page-'+name);
+  if (page) page.classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const names = ['home','tools','guides','hn','bookmarks','profile'];
+  const idx = names.indexOf(name);
+  if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+  if (name === 'tools' && !document.getElementById('tools-page-container').dataset.loaded) loadToolsPage();
+  if (name === 'guides' && !document.getElementById('guides-page-container').dataset.loaded) loadGuidesPage();
+  if (name === 'hn' && !document.getElementById('hn-page-container').dataset.loaded) loadHNPage();
+  if (name === 'bookmarks') loadBookmarksPage();
+  if (name === 'profile') loadProfilePage();
+}
+
+// ── TOAST ──
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ── AUTH ──
+async function loginWithGitHub() {
+  await sb.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: window.location.origin }
+  });
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  toast('Signed out');
+}
+
+function updateAuthUI() {
+  const area = document.getElementById('auth-area');
+  if (currentUser) {
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px">
+        <img class="user-avatar" src="${currentUser.user_metadata?.avatar_url}" alt="">
+        <button class="btn-icon" onclick="logout()">Sign out</button>
+      </div>`;
+  } else {
+    area.innerHTML = `<button class="auth-btn" onclick="loginWithGitHub()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      Sign in with GitHub
+    </button>`;
+  }
+}
+
+// ── STREAK ──
+async function checkStreak() {
+  if (!currentUser) return;
+  const today = new Date().toDateString();
+  const key = `streak_${currentUser.id}`;
+  const stored = localStorage.getItem(key);
+  let data = stored ? JSON.parse(stored) : { count: 0, lastVisit: null };
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+  if (data.lastVisit === today) {
+    // already visited today
+  } else if (data.lastVisit === yesterday) {
+    data.count += 1;
+    data.lastVisit = today;
+    localStorage.setItem(key, JSON.stringify(data));
+    if (data.count % 7 === 0) showStreakCelebration(data.count);
+  } else {
+    data.count = 1;
+    data.lastVisit = today;
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  const badge = document.getElementById('streak-display');
+  document.getElementById('streak-count').textContent = data.count;
+  badge.style.display = data.count > 0 ? 'flex' : 'none';
+}
+
+function showStreakModal() {
+  const key = `streak_${currentUser?.id || 'anon'}`;
+  const stored = localStorage.getItem(key);
+  const data = stored ? JSON.parse(stored) : { count: 0 };
+  document.getElementById('streak-modal-title').textContent = `🔥 ${data.count} Day Streak!`;
+  document.getElementById('streak-modal-sub').textContent = data.count >= 30
+    ? "You're a legend. 30+ days of building in public! 🏆"
+    : data.count >= 7
+    ? "One week strong! The best indie hackers show up every day. 💪"
+    : "Keep coming back daily to build your streak!";
+  document.getElementById('streak-modal').classList.add('open');
+}
+
+function showStreakCelebration(count) {
+  document.getElementById('streak-modal-title').textContent = `🎉 ${count} Day Streak!`;
+  document.getElementById('streak-modal-sub').textContent = `Incredible! You've visited ${count} days in a row. You're in the top 1% of indie hackers.`;
+  document.getElementById('streak-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('streak-modal').classList.remove('open'); }
+
+// ── BOOKMARKS ──
+async function loadUserBookmarks() {
+  if (!currentUser) return;
+  const key = `bookmarks_${currentUser.id}`;
+  const stored = localStorage.getItem(key);
+  if (stored) userBookmarks = new Set(JSON.parse(stored));
+}
+
+function toggleBookmark(id, title) {
+  if (!currentUser) { toast('Sign in to bookmark articles'); return; }
+  const key = `bookmarks_${currentUser.id}`;
+  if (userBookmarks.has(id)) {
+    userBookmarks.delete(id);
+    toast('Removed from saved');
+  } else {
+    userBookmarks.add(id);
+    // Store with title
+    const bms = JSON.parse(localStorage.getItem(key+'_data') || '[]');
+    bms.push({ id, title, savedAt: new Date().toISOString() });
+    localStorage.setItem(key+'_data', JSON.stringify(bms));
+    toast('Saved! 🔖');
+  }
+  localStorage.setItem(key, JSON.stringify([...userBookmarks]));
+  // Refresh bookmark buttons
+  document.querySelectorAll(`[data-bookmark-id="${id}"]`).forEach(btn => {
+    btn.classList.toggle('bookmarked', userBookmarks.has(id));
+    btn.textContent = userBookmarks.has(id) ? '🔖' : '🔖';
+  });
+}
+
+// ── VOTES ──
+function vote(toolId, type, btn) {
+  if (!currentUser) { toast('Sign in to vote'); return; }
+  const key = `votes_${currentUser.id}`;
+  const stored = JSON.parse(localStorage.getItem(key) || '{}');
+  const prev = stored[toolId];
+  if (prev === type) {
+    delete stored[toolId];
+    btn.closest('.vote-btns').querySelectorAll('.vote-btn').forEach(b => {
+      b.classList.remove('voted-love','voted-hate');
+    });
+  } else {
+    stored[toolId] = type;
+    btn.closest('.vote-btns').querySelectorAll('.vote-btn').forEach(b => {
+      b.classList.remove('voted-love','voted-hate');
+    });
+    btn.classList.add(type === 'love' ? 'voted-love' : 'voted-hate');
+  }
+  localStorage.setItem(key, JSON.stringify(stored));
+  userVotes = stored;
+  toast(type === 'love' ? '😍 Voted!' : '😤 Noted!');
+}
+
+// ── READ HISTORY ──
+function markRead(id) {
+  if (!currentUser) return;
+  userReadHistory.add(id);
+  const key = `read_${currentUser.id}`;
+  localStorage.setItem(key, JSON.stringify([...userReadHistory]));
+}
+
+// ── SHARE ──
 function share(title, url) {
   if (navigator.share) {
     navigator.share({ title, url: url || location.href });
   } else {
     navigator.clipboard.writeText(url || location.href);
-    alert('Link copied!');
+    toast('Link copied! ✓');
   }
 }
 
-// VOTE
-function vote(btn, type) {
-  const btns = btn.closest('.vote-btns').querySelectorAll('.vote-btn');
-  btns.forEach(b => b.classList.remove('voted'));
-  btn.classList.add('voted');
+// ── PUSH NOTIFICATIONS ──
+function showPushBanner() {
+  if (!('Notification' in window) || Notification.permission === 'granted') return;
+  const container = document.getElementById('push-banner-container');
+  container.innerHTML = `
+    <div class="push-banner">
+      <div class="push-text">🔔 Get notified when your tools have outages or price changes</div>
+      <button class="push-btn" onclick="requestPush()">Enable alerts</button>
+    </div>`;
 }
 
-// LOAD HN
-async function loadHN() {
+async function requestPush() {
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    document.getElementById('push-banner-container').innerHTML = '';
+    toast('🔔 Push notifications enabled!');
+  }
+}
+
+// ── NEWSLETTER ──
+function showNewsletter() {
+  const container = document.getElementById('newsletter-container');
+  container.innerHTML = `
+    <div class="newsletter-bar">
+      <div class="newsletter-text">📬 Weekly digest: <span>most rageful tools</span>, top guides, indie hacker wins</div>
+      <div class="newsletter-input-wrap">
+        <input class="newsletter-input" id="nl-email" type="email" placeholder="your@email.com">
+        <button class="newsletter-btn" onclick="subscribeNewsletter()">Subscribe →</button>
+      </div>
+    </div>`;
+}
+
+async function subscribeNewsletter() {
+  const email = document.getElementById('nl-email').value;
+  if (!email || !email.includes('@')) { toast('Enter a valid email'); return; }
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/email_subscribers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email, subscribed_at: new Date().toISOString() })
+    });
+  } catch(e) {}
+  document.getElementById('newsletter-container').innerHTML = '';
+  toast('🎉 Subscribed! See you next week.');
+}
+
+// ── LOAD HN ──
+async function loadHN(limit=5) {
+  if (hnStoriesCache.length > 0) return hnStoriesCache.slice(0, limit);
   try {
     const res = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
     const ids = await res.json();
-    const top10 = ids.slice(0, 10);
-    const stories = await Promise.all(top10.map(id =>
+    const stories = await Promise.all(ids.slice(0,10).map(id =>
       fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json())
     ));
-
-    const comments = [
-      'Worth reading — especially the part about pricing.',
-      'This will affect how you build your next SaaS.',
-      'The indie maker angle here is underrated.',
-      'Practical. No fluff. Read this one.',
-      'Lots of discussion in the comments.',
-      'Good context on where this is heading.',
-      'This changes the calculus for solo builders.',
-      'Short but worth your time.',
-      'Community is split on this.',
-      'The benchmarks are interesting.'
-    ];
-
-    const container = document.getElementById('hn-container');
-    container.innerHTML = stories.map((s, i) => `
-      <div class="hn-item">
-        <div class="hn-num">${String(i+1).padStart(2,'0')}</div>
-        <div class="hn-content">
-          <a class="hn-title" href="${s.url || `https://news.ycombinator.com/item?id=${s.id}`}" target="_blank">${s.title}</a>
-          <div class="hn-meta">
-            <span>${s.score} pts</span>
-            <span>${s.descendants || 0} comments</span>
-            <span class="hn-italic">${comments[i]}</span>
-            <button class="share-btn" onclick="share('${s.title.replace(/'/g,"\\'")}', '${s.url || `https://news.ycombinator.com/item?id=${s.id}`}')">↗ share</button>
-          </div>
-        </div>
-      </div>
-    `).join('');
-
+    hnStoriesCache = stories;
     document.getElementById('stat-hn').textContent = '10';
-  } catch(e) {
-    document.getElementById('hn-container').innerHTML = '<div class="empty-state">Could not load HN stories.</div>';
-  }
+    return stories.slice(0, limit);
+  } catch(e) { return []; }
 }
 
-// LOAD TOOLS FROM SUPABASE
+const hnComments = [
+  'Worth reading — especially the pricing part.',
+  'This will affect how you build your next SaaS.',
+  'The indie maker angle here is underrated.',
+  'Practical. No fluff. Read this one.',
+  'Lots of discussion in the comments.',
+  'Good context on where this is heading.',
+  'This changes the calculus for solo builders.',
+  'Short but worth your time.',
+  'Community is split on this.',
+  'The benchmarks are interesting.'
+];
+
+function renderHNItem(s, i) {
+  const url = s.url || `https://news.ycombinator.com/item?id=${s.id}`;
+  return `
+    <div class="hn-item">
+      <div class="hn-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="hn-content">
+        <a class="hn-title" href="${url}" target="_blank" onclick="markRead('hn_${s.id}')">${s.title}</a>
+        <div class="hn-meta">
+          <span>${s.score} pts</span>
+          <span>${s.descendants||0} comments</span>
+          <span class="hn-comment">${hnComments[i % hnComments.length]}</span>
+          <button class="btn-icon" onclick="share('${s.title.replace(/'/g,"\\'")}','${url}')">↗ share</button>
+          <button class="btn-icon ${userBookmarks.has('hn_'+s.id)?'bookmarked':''}" data-bookmark-id="hn_${s.id}" onclick="toggleBookmark('hn_${s.id}','${s.title.replace(/'/g,"\\'")}')">🔖</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── LOAD TOOLS ──
+const defaultTools = [
+  {id:'vercel',name:'Vercel',category:'hosting',emoji:'⬡',trend:'flat',dx:8.8,price:5.2,rage:5.8,happiness:7.4,happiness_emoji:'😐',rage_note:'Pricing complaints up this week'},
+  {id:'supabase',name:'Supabase',category:'database',emoji:'🗄',trend:'up',dx:9.1,price:8.6,rage:1.8,happiness:9.2,happiness_emoji:'🥰',rage_note:null},
+  {id:'netlify',name:'Netlify',category:'hosting',emoji:'🌐',trend:'up',dx:8.2,price:7.8,rage:2.8,happiness:8.1,happiness_emoji:'😊',rage_note:null},
+  {id:'stripe',name:'Stripe',category:'payments',emoji:'💳',trend:'flat',dx:9.4,price:6.0,rage:2.2,happiness:8.7,happiness_emoji:'😄',rage_note:null},
+  {id:'railway',name:'Railway',category:'hosting',emoji:'🚂',trend:'up',dx:8.7,price:7.4,rage:1.4,happiness:8.9,happiness_emoji:'🤩',rage_note:null},
+  {id:'clerk',name:'Clerk',category:'auth',emoji:'🔑',trend:'up',dx:9.0,price:7.0,rage:1.2,happiness:9.0,happiness_emoji:'😍',rage_note:null},
+  {id:'resend',name:'Resend',category:'email',emoji:'📧',trend:'up',dx:9.2,price:8.8,rage:0.8,happiness:9.3,happiness_emoji:'🥰',rage_note:null},
+  {id:'planetscale',name:'PlanetScale',category:'database',emoji:'🪐',trend:'down',dx:7.4,price:2.8,rage:8.2,happiness:4.1,happiness_emoji:'😤',rage_note:'Free tier removed — community angry'}
+];
+
 async function loadTools() {
-  const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
-
-  const defaultTools = [
-    { name: 'Vercel', category: 'hosting', emoji: '⬡', trend: 'flat', dx: 8.8, price: 5.2, rage: 5.8, happiness: 7.4, happiness_emoji: '😐', rage_note: 'Pricing complaints up this week' },
-    { name: 'Supabase', category: 'database', emoji: '🗄', trend: 'up', dx: 9.1, price: 8.6, rage: 1.8, happiness: 9.2, happiness_emoji: '🥰', rage_note: null },
-    { name: 'Netlify', category: 'hosting', emoji: '🌐', trend: 'up', dx: 8.2, price: 7.8, rage: 2.8, happiness: 8.1, happiness_emoji: '😊', rage_note: null },
-    { name: 'Stripe', category: 'payments', emoji: '💳', trend: 'flat', dx: 9.4, price: 6.0, rage: 2.2, happiness: 8.7, happiness_emoji: '😄', rage_note: null },
-    { name: 'Railway', category: 'hosting', emoji: '🚂', trend: 'up', dx: 8.7, price: 7.4, rage: 1.4, happiness: 8.9, happiness_emoji: '🤩', rage_note: null },
-  ];
-
   let tools = defaultTools;
-
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tools?order=happiness.desc&limit=5`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tools?order=happiness.desc`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.length > 0) tools = data;
-    }
+    if (res.ok) { const d = await res.json(); if (d?.length > 0) tools = d; }
   } catch(e) {}
+  return tools;
+}
 
-  const container = document.getElementById('tools-container');
-  container.innerHTML = tools.map(t => `
+function renderToolCard(t, compact=false) {
+  const voteState = userVotes[t.id||t.name] || '';
+  return `
     <div class="tool-card">
       <div class="tool-header">
         <div class="tool-left">
-          <div class="tool-icon">${t.emoji || '🔧'}</div>
+          <div class="tool-icon">${t.emoji||'🔧'}</div>
           <div>
             <div class="tool-name">${t.name}</div>
             <div class="tool-cat">${t.category}</div>
           </div>
         </div>
-        <div class="trend-badge ${t.trend === 'up' ? 'trend-up' : t.trend === 'down' ? 'trend-down' : 'trend-flat'}">
-          ${t.trend === 'up' ? '↑ Rising' : t.trend === 'down' ? '↓ Falling' : '→ Stable'}
+        <div class="trend-badge ${t.trend==='up'?'trend-up':t.trend==='down'?'trend-down':'trend-flat'}">
+          ${t.trend==='up'?'↑ Rising':t.trend==='down'?'↓ Falling':'→ Stable'}
         </div>
       </div>
       <div class="tool-scores">
-        <div class="score-row">
-          <div class="score-label">DX</div>
-          <div class="score-track"><div class="score-fill fill-dx" style="width:${t.dx*10}%"></div></div>
-          <div class="score-val">${t.dx}</div>
-        </div>
-        <div class="score-row">
-          <div class="score-label">Price</div>
-          <div class="score-track"><div class="score-fill fill-price" style="width:${t.price*10}%"></div></div>
-          <div class="score-val">${t.price}</div>
-        </div>
-        <div class="score-row">
-          <div class="score-label">Rage</div>
-          <div class="score-track"><div class="score-fill fill-rage" style="width:${t.rage*10}%"></div></div>
-          <div class="score-val">${t.rage}</div>
-        </div>
+        <div class="score-row"><div class="score-label">DX</div><div class="score-track"><div class="score-fill fill-dx" style="width:${t.dx*10}%"></div></div><div class="score-val">${t.dx}</div></div>
+        <div class="score-row"><div class="score-label">Price</div><div class="score-track"><div class="score-fill fill-price" style="width:${t.price*10}%"></div></div><div class="score-val">${t.price}</div></div>
+        <div class="score-row"><div class="score-label">Rage</div><div class="score-track"><div class="score-fill fill-rage" style="width:${t.rage*10}%"></div></div><div class="score-val">${t.rage}</div></div>
       </div>
-      ${t.rage_note ? `<div class="rage-badge">🔥 ${t.rage_note}</div>` : ''}
+      ${t.rage_note?`<div class="rage-note">🔥 ${t.rage_note}</div>`:''}
       <div class="tool-happiness">
         <div class="happiness-label">Indie Hacker Happiness</div>
-        <div class="happiness-score">${t.happiness} <span>/ 10</span> ${t.happiness_emoji || ''}</div>
+        <div class="happiness-score">${t.happiness} <span>/ 10</span> ${t.happiness_emoji||''}</div>
       </div>
-      <div class="tool-vote">
+      <div class="tool-footer">
         <div class="vote-label">Rate your experience</div>
         <div class="vote-btns">
-          <button class="vote-btn" onclick="vote(this,'love')">😍 Love it</button>
-          <button class="vote-btn" onclick="vote(this,'hate')">😤 Hate it</button>
+          <button class="vote-btn ${voteState==='love'?'voted-love':''}" onclick="vote('${t.id||t.name}','love',this)">😍 Love it</button>
+          <button class="vote-btn ${voteState==='hate'?'voted-hate':''}" onclick="vote('${t.id||t.name}','hate',this)">😤 Hate it</button>
         </div>
       </div>
-    </div>
-  `).join('');
-
-  const avgHappiness = (tools.reduce((a,t) => a + t.happiness, 0) / tools.length).toFixed(1);
-  document.getElementById('stat-tools').textContent = tools.length;
-  document.getElementById('stat-happiness').textContent = avgHappiness;
+    </div>`;
 }
 
-// LOAD GUIDES FROM SUPABASE
-async function loadGuides() {
-  const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
-
-  let guides = [];
-
+// ── LOAD GUIDES ──
+async function loadGuides(limit=1) {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/guides?order=created_at.desc&limit=1`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/guides?order=created_at.desc&limit=${limit}`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
-    if (res.ok) guides = await res.json();
+    if (res.ok) { const d = await res.json(); return d||[]; }
   } catch(e) {}
-
-  const container = document.getElementById('guide-container');
-
-  if (guides.length > 0) {
-    const g = guides[0];
-    container.innerHTML = `
-      <div class="guide-card">
-        <div class="guide-meta">
-          <span class="guide-tag">Guide</span>
-          <div class="guide-read">
-            <span>${g.read_time || '5m'} read</span>
-            <button class="share-btn" onclick="share('${(g.title||'').replace(/'/g,"\\'")}')">↗ share</button>
-          </div>
-        </div>
-        <div class="guide-title">${g.title}</div>
-        <div class="guide-desc">${g.description || ''}</div>
-      </div>
-    `;
-    document.getElementById('stat-guides').textContent = '1+';
-  } else {
-    container.innerHTML = '<div class="empty-state">No guide today yet. Check back soon.</div>';
-    document.getElementById('stat-guides').textContent = '0';
-  }
+  return [];
 }
 
-// INIT
-loadHN();
-loadTools();
-loadGuides();
+function renderGuideCard(g) {
+  const isRead = userReadHistory.has('guide_'+g.id);
+  const isBookmarked = userBookmarks.has('guide_'+g.id);
+  return `
+    <div class="guide-card" onclick="markRead('guide_${g.id}')">
+      <div class="guide-top">
+        <span class="guide-tag">${g.category||'Guide'}</span>
+        <div class="guide-actions">
+          ${isRead?'<span class="read-badge">✓ Read</span>':''}
+          <button class="btn-icon ${isBookmarked?'bookmarked':''}" data-bookmark-id="guide_${g.id}" onclick="event.stopPropagation();toggleBookmark('guide_${g.id}','${(g.title||'').replace(/'/g,"\\'")}')">🔖</button>
+          <button class="btn-icon" onclick="event.stopPropagation();share('${(g.title||'').replace(/'/g,"\\'")}')">↗</button>
+        </div>
+      </div>
+      <div class="guide-title">${g.title}</div>
+      <div class="guide-desc">${g.description||''}</div>
+      <div class="guide-meta">
+        <span>${g.read_time||'5 min'} read</span>
+        ${g.tags?g.tags.map(tag=>`<span>#${tag}</span>`).join(''):''}
+      </div>
+    </div>`;
+}
+
+// ── HOME PAGE ──
+async function loadHome() {
+  const [stories, tools, guides] = await Promise.all([loadHN(5), loadTools(), loadGuides(1)]);
+
+  // Guide
+  const gc = document.getElementById('home-guide-container');
+  gc.innerHTML = guides.length > 0 ? renderGuideCard(guides[0]) : '<div class="empty">No guide today yet. Check back soon.</div>';
+  document.getElementById('stat-guides').textContent = guides.length || '0';
+
+  // HN
+  const hnc = document.getElementById('home-hn-container');
+  hnc.innerHTML = stories.map((s,i) => renderHNItem(s,i)).join('') || '<div class="empty">Could not load stories.</div>';
+
+  // Tools (top 3)
+  const tc = document.getElementById('home-tools-container');
+  const topTools = tools.slice(0,3);
+  tc.innerHTML = topTools.map(t => renderToolCard(t, true)).join('');
+  const avg = (tools.reduce((a,t)=>a+t.happiness,0)/tools.length).toFixed(1);
+  document.getElementById('stat-tools').textContent = tools.length;
+  document.getElementById('stat-happiness').textContent = avg;
+}
+
+// ── TOOLS PAGE ──
+async function loadToolsPage() {
+  const tools = await loadTools();
+  const c = document.getElementById('tools-page-container');
+  c.innerHTML = tools.map(t => renderToolCard(t)).join('');
+  c.dataset.loaded = '1';
+}
+
+// ── GUIDES PAGE ──
+async function loadGuidesPage() {
+  const guides = await loadGuides(50);
+  const c = document.getElementById('guides-page-container');
+  c.innerHTML = guides.length > 0 ? guides.map(g => renderGuideCard(g)).join('') : '<div class="empty">Guides are being generated. Check back soon!</div>';
+  c.dataset.loaded = '1';
+}
+
+// ── HN FULL PAGE ──
+async function loadHNPage() {
+  const stories = await loadHN(10);
+  const c = document.getElementById('hn-page-container');
+  c.innerHTML = stories.map((s,i) => renderHNItem(s,i)).join('');
+  c.dataset.loaded = '1';
+}
+
+// ── BOOKMARKS PAGE ──
+function loadBookmarksPage() {
+  const c = document.getElementById('bookmarks-container');
+  if (!currentUser) { c.innerHTML = '<div class="empty">Sign in with GitHub to save articles 📌</div>'; return; }
+  const key = `bookmarks_${currentUser.id}_data`;
+  const bms = JSON.parse(localStorage.getItem(key) || '[]').filter(b => userBookmarks.has(b.id));
+  if (bms.length === 0) { c.innerHTML = '<div class="empty">No saved articles yet. Bookmark guides and HN stories!</div>'; return; }
+  c.innerHTML = bms.map(b => `
+    <div class="guide-card">
+      <div class="guide-top">
+        <span class="guide-tag">Saved</span>
+        <button class="btn-icon bookmarked" onclick="toggleBookmark('${b.id}','${(b.title||'').replace(/'/g,"\\'")}');loadBookmarksPage()">🔖 Remove</button>
+      </div>
+      <div class="guide-title">${b.title}</div>
+      <div class="guide-meta"><span>${new Date(b.savedAt).toLocaleDateString()}</span></div>
+    </div>`).join('');
+}
+
+// ── PROFILE PAGE ──
+function loadProfilePage() {
+  const c = document.getElementById('profile-container');
+  if (!currentUser) { c.innerHTML = '<div class="empty">Sign in with GitHub to see your profile 👤</div>'; return; }
+  const key = `streak_${currentUser.id}`;
+  const streak = JSON.parse(localStorage.getItem(key) || '{"count":0}');
+  const readKey = `read_${currentUser.id}`;
+  const readCount = JSON.parse(localStorage.getItem(readKey) || '[]').length;
+  const bmKey = `bookmarks_${currentUser.id}`;
+  const bmCount = JSON.parse(localStorage.getItem(bmKey) || '[]').length;
+  const username = currentUser.user_metadata?.user_name || currentUser.email;
+  const avatar = currentUser.user_metadata?.avatar_url;
+  const badgeUrl = `https://stillnotathing.com/badge/${username}`;
+
+  c.innerHTML = `
+    <div class="profile-card">
+      <div class="profile-header">
+        ${avatar?`<img class="profile-avatar" src="${avatar}" alt="">`:''}
+        <div>
+          <div class="profile-name">${currentUser.user_metadata?.full_name || username}</div>
+          <div class="profile-handle">@${username}</div>
+        </div>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat"><div class="profile-stat-num">🔥 ${streak.count}</div><div class="profile-stat-label">day streak</div></div>
+        <div class="profile-stat"><div class="profile-stat-num">${readCount}</div><div class="profile-stat-label">articles read</div></div>
+        <div class="profile-stat"><div class="profile-stat-num">${bmCount}</div><div class="profile-stat-label">bookmarked</div></div>
+      </div>
+    </div>
+
+    <div class="badge-section">
+      <div class="badge-title">📛 Your Stack Badge</div>
+      <div class="badge-code">[![StillNotAThing](${badgeUrl}.svg)](https://stillnotathing.com)</div>
+      <button class="btn-icon" onclick="navigator.clipboard.writeText('[![StillNotAThing](${badgeUrl}.svg)](https://stillnotathing.com)');toast('Badge copied! Paste in GitHub README')">Copy badge code</button>
+    </div>`;
+}
+
+// ── SUBMIT TOOL ──
+async function submitTool() {
+  if (!currentUser) { toast('Sign in to submit a tool'); return; }
+  const name = document.getElementById('submit-name').value.trim();
+  const category = document.getElementById('submit-category').value;
+  const url = document.getElementById('submit-url').value.trim();
+  const desc = document.getElementById('submit-desc').value.trim();
+  if (!name || !url) { toast('Fill in all required fields'); return; }
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/tool_submissions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name, category, url, description: desc, submitted_by: currentUser.email })
+    });
+  } catch(e) {}
+  toast('🎉 Tool submitted! We\'ll review it soon.');
+  document.getElementById('submit-name').value = '';
+  document.getElementById('submit-url').value = '';
+  document.getElementById('submit-desc').value = '';
+}
+
+// ── INIT ──
+async function init() {
+  // Auth state
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    updateAuthUI();
+    const key = `read_${currentUser.id}`;
+    userReadHistory = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
+    const vkey = `votes_${currentUser.id}`;
+    userVotes = JSON.parse(localStorage.getItem(vkey) || '{}');
+    await loadUserBookmarks();
+    checkStreak();
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      currentUser = session.user;
+      updateAuthUI();
+      const key = `read_${currentUser.id}`;
+      userReadHistory = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
+      await loadUserBookmarks();
+      checkStreak();
+      toast(`Welcome, ${session.user.user_metadata?.name || 'developer'}! 👋`);
+    } else {
+      currentUser = null;
+      updateAuthUI();
+    }
+  });
+
+  showPushBanner();
+  showNewsletter();
+  await loadHome();
+}
+
+init();
+</script>
+
+<!-- Giscus Comments (shown on guides) -->
+<script>
+window.initGiscus = function() {
+  const el = document.getElementById('giscus-container');
+  if (!el) return;
+  const script = document.createElement('script');
+  script.src = 'https://giscus.app/client.js';
+  script.setAttribute('data-repo', 'jammiejammmie/stillnotathing-dev');
+  script.setAttribute('data-repo-id', 'R_kgDOO...');
+  script.setAttribute('data-category', 'General');
+  script.setAttribute('data-category-id', 'DIC_kwDOO...');
+  script.setAttribute('data-mapping', 'pathname');
+  script.setAttribute('data-strict', '0');
+  script.setAttribute('data-reactions-enabled', '1');
+  script.setAttribute('data-emit-metadata', '0');
+  script.setAttribute('data-input-position', 'bottom');
+  script.setAttribute('data-theme', 'dark');
+  script.setAttribute('data-lang', 'en');
+  script.crossOrigin = 'anonymous';
+  script.async = true;
+  el.appendChild(script);
+};
 </script>
 </body>
 </html>
