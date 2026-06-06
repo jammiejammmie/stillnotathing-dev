@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Clock, BookOpen, Bug, GraduationCap } from "lucide-react";
 import { useListGuides } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ShareButton from "@/components/ShareButton";
 
 const TYPE_CONFIG = {
   guide: { label: "Guide", icon: BookOpen, color: "text-primary bg-primary/10 border-primary/20" },
@@ -19,6 +20,7 @@ const FILTERS = [
 
 export default function GuidesPage() {
   const [selectedType, setSelectedType] = useState<string>("");
+  const [, navigate] = useLocation();
   const { data: guides, isLoading } = useListGuides({ type: selectedType || undefined });
 
   return (
@@ -71,51 +73,63 @@ export default function GuidesPage() {
             const date = new Date(guide.publishedAt).toLocaleDateString("en-US", {
               month: "short", day: "numeric", year: "numeric",
             });
+            const guideUrl = `${window.location.origin}/guides/${guide.id}`;
 
             return (
-              <Link key={guide.id} href={`/guides/${guide.id}`}>
-                <div
-                  className="group border border-border rounded-lg p-5 bg-card hover:border-primary/30 transition-all duration-200 cursor-pointer"
-                  data-testid={`card-guide-${guide.id}`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${config.color}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <h2
-                          className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2"
-                          data-testid={`text-guide-title-${guide.id}`}
-                        >
-                          {guide.title}
-                        </h2>
+              <div
+                key={guide.id}
+                className="group border border-border rounded-lg p-5 bg-card hover:border-primary/30 transition-all duration-200"
+                data-testid={`card-guide-${guide.id}`}
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border cursor-pointer ${config.color}`}
+                    onClick={() => navigate(`/guides/${guide.id}`)}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <h2
+                        className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 cursor-pointer"
+                        data-testid={`text-guide-title-${guide.id}`}
+                        onClick={() => navigate(`/guides/${guide.id}`)}
+                      >
+                        {guide.title}
+                      </h2>
+                      <div className="flex items-center gap-1.5 shrink-0">
                         {guide.isFeatured && (
-                          <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded shrink-0">
+                          <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded">
                             featured
                           </span>
                         )}
+                        <ShareButton title={guide.title} url={guideUrl} size="xs" />
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{guide.excerpt}</p>
-                      <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-muted-foreground">
-                        <span className={`px-1.5 py-0.5 rounded border ${config.color}`}>{config.label}</span>
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{guide.readingTime}m</span>
-                        {guide.author && <span>{guide.author}</span>}
-                        <span>{date}</span>
-                      </div>
-                      {guide.tags && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {guide.tags.split(",").slice(0, 4).map((tag) => (
-                            <span key={tag.trim()} className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                              {tag.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
+                    <p
+                      className="text-xs text-muted-foreground mt-1 line-clamp-2 cursor-pointer"
+                      onClick={() => navigate(`/guides/${guide.id}`)}
+                    >
+                      {guide.excerpt}
+                    </p>
+                    <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-muted-foreground flex-wrap">
+                      <span className={`px-1.5 py-0.5 rounded border ${config.color}`}>{config.label}</span>
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{guide.readingTime}m</span>
+                      {guide.author && <span>{guide.author}</span>}
+                      <span>{date}</span>
+                    </div>
+                    {guide.tags && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {guide.tags.split(",").slice(0, 4).map((tag) => (
+                          <span key={tag.trim()} className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {tag.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

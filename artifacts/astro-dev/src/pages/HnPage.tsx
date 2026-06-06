@@ -1,6 +1,7 @@
 import { ExternalLink, MessageSquare, TrendingUp } from "lucide-react";
 import { useGetHnCurated, getGetHnCuratedQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ShareButton from "@/components/ShareButton";
 
 const TAG_COLORS: Record<string, string> = {
   "show hn": "text-amber-400 bg-amber-400/10 border-amber-400/20",
@@ -54,19 +55,21 @@ export default function HnPage() {
       ) : stories && stories.length > 0 ? (
         <div className="space-y-2" data-testid="list-hn-stories">
           {stories.map((story, i) => (
-            <a
+            <div
               key={story.id}
-              href={story.url}
-              target="_blank"
-              rel="noopener noreferrer"
               className="group flex items-start gap-4 border border-border rounded-lg p-4 bg-card hover:border-primary/30 hover:bg-card/80 transition-all duration-150"
               data-testid={`card-hn-story-${story.id}`}
             >
               {/* Rank */}
               <span className="font-mono text-xs text-muted-foreground/40 tabular-nums mt-0.5 shrink-0 w-5 text-right">{i + 1}</span>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
+              {/* Content — clickable area */}
+              <a
+                href={story.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 min-w-0"
+              >
                 <div className="flex items-start gap-2 flex-wrap mb-1">
                   {story.tag && (
                     <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded border shrink-0 ${TAG_COLORS[story.tag.toLowerCase()] || TAG_COLORS.discussion}`}>
@@ -97,10 +100,21 @@ export default function HnPage() {
                   {story.author && <span>by {story.author}</span>}
                   <span>{timeAgo(story.postedAt)}</span>
                 </div>
-              </div>
+              </a>
 
-              <ExternalLink className="w-4 h-4 text-muted-foreground/30 shrink-0 mt-0.5 group-hover:text-primary/50 transition-colors" />
-            </a>
+              {/* Actions */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <ShareButton title={story.title} url={story.url} size="xs" />
+                <a
+                  href={story.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="w-4 h-4 text-muted-foreground/30 hover:text-primary/50 transition-colors" />
+                </a>
+              </div>
+            </div>
           ))}
         </div>
       ) : (

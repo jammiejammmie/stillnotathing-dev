@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ExternalLink, TrendingUp, BookOpen, Newspaper, ArrowRight, Zap } from "lucide-react";
 import {
   useGetTopTools,
@@ -7,6 +7,8 @@ import {
   useGetStatsSummary,
 } from "@workspace/api-client-react";
 import ScoreBar from "@/components/ScoreBar";
+import ShareButton from "@/components/ShareButton";
+import TrendBadge from "@/components/TrendBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -20,6 +22,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 }
 
 export default function HomePage() {
+  const [, navigate] = useLocation();
   const { data: topTools, isLoading: toolsLoading } = useGetTopTools();
   const { data: dailyGuide, isLoading: guideLoading } = useGetDailyGuide();
   const { data: hnStories, isLoading: hnLoading } = useGetHnCurated({ limit: 8 });
@@ -76,37 +79,46 @@ export default function HomePage() {
                 <Skeleton className="h-4 w-5/6" />
               </div>
             ) : dailyGuide ? (
-              <Link href={`/guides/${dailyGuide.id}`}>
-                <div className="group border border-border rounded-lg p-6 bg-card hover:border-primary/30 transition-all duration-200 cursor-pointer" data-testid="card-daily-guide">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                      <span className={`text-[10px] font-mono font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                        dailyGuide.type === "error-fix"
-                          ? "text-red-400 bg-red-400/10"
-                          : dailyGuide.type === "tutorial"
-                          ? "text-blue-400 bg-blue-400/10"
-                          : "text-primary bg-primary/10"
-                      }`}>
-                        {dailyGuide.type}
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono text-muted-foreground shrink-0">{dailyGuide.readingTime}m read</span>
+              <div className="border border-border rounded-lg p-6 bg-card hover:border-primary/30 transition-all duration-200" data-testid="card-daily-guide">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <span className={`text-[10px] font-mono font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                      dailyGuide.type === "error-fix"
+                        ? "text-red-400 bg-red-400/10"
+                        : dailyGuide.type === "tutorial"
+                        ? "text-blue-400 bg-blue-400/10"
+                        : "text-primary bg-primary/10"
+                    }`}>
+                      {dailyGuide.type}
+                    </span>
                   </div>
-                  <h2 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors" data-testid="text-daily-guide-title">
-                    {dailyGuide.title}
-                  </h2>
-                  <p className="text-sm text-muted-foreground line-clamp-3">{dailyGuide.excerpt}</p>
-                  {dailyGuide.tags && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {dailyGuide.tags.split(",").map((tag) => (
-                        <span key={tag.trim()} className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                          {tag.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-mono text-muted-foreground">{dailyGuide.readingTime}m read</span>
+                    <ShareButton
+                      title={dailyGuide.title}
+                      url={`${window.location.origin}/guides/${dailyGuide.id}`}
+                      size="xs"
+                    />
+                  </div>
                 </div>
-              </Link>
+                <h2
+                  className="text-lg font-bold text-foreground mb-2 hover:text-primary transition-colors cursor-pointer"
+                  data-testid="text-daily-guide-title"
+                  onClick={() => navigate(`/guides/${dailyGuide.id}`)}
+                >
+                  {dailyGuide.title}
+                </h2>
+                <p className="text-sm text-muted-foreground line-clamp-3">{dailyGuide.excerpt}</p>
+                {dailyGuide.tags && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {dailyGuide.tags.split(",").map((tag) => (
+                      <span key={tag.trim()} className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        {tag.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="border border-border rounded-lg p-6 bg-card text-center text-sm text-muted-foreground">
                 No guide today yet. Check back soon.
@@ -135,16 +147,18 @@ export default function HomePage() {
                     </div>
                   ))
                 : hnStories?.slice(0, 6).map((story, i) => (
-                    <a
+                    <div
                       key={story.id}
-                      href={story.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="flex items-start gap-3 border border-border rounded p-3 bg-card hover:border-primary/30 hover:bg-card/80 transition-all duration-150 group"
                       data-testid={`card-hn-story-${story.id}`}
                     >
                       <span className="font-mono text-xs text-muted-foreground/50 tabular-nums mt-0.5 shrink-0 w-4 text-right">{i + 1}</span>
-                      <div className="min-w-0 flex-1">
+                      <a
+                        href={story.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-w-0 flex-1"
+                      >
                         <div className="text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1 font-medium" data-testid={`text-hn-title-${story.id}`}>
                           {story.title}
                         </div>
@@ -156,9 +170,14 @@ export default function HomePage() {
                         {story.curatorNote && (
                           <p className="text-xs text-primary/70 mt-1 italic">{story.curatorNote}</p>
                         )}
+                      </a>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <ShareButton title={story.title} url={story.url} size="xs" />
+                        <a href={story.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-primary/50 transition-colors" />
+                        </a>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0 mt-0.5 group-hover:text-primary/50 transition-colors" />
-                    </a>
+                    </div>
                   ))}
             </div>
           </section>
@@ -186,29 +205,57 @@ export default function HomePage() {
                   </div>
                 ))
               : topTools?.slice(0, 5).map((tool) => (
-                  <Link key={tool.id} href={`/tools/${tool.id}`}>
+                  <div
+                    key={tool.id}
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/30 transition-all duration-200"
+                    data-testid={`card-top-tool-${tool.id}`}
+                  >
+                    {/* Header row */}
                     <div
-                      className="group border border-border rounded-lg p-4 bg-card hover:border-primary/30 transition-all duration-200 cursor-pointer"
-                      data-testid={`card-top-tool-${tool.id}`}
+                      className="flex items-center gap-2.5 mb-3 cursor-pointer"
+                      onClick={() => navigate(`/tools/${tool.id}`)}
                     >
-                      <div className="flex items-center gap-2.5 mb-3">
-                        {tool.logoUrl ? (
-                          <img src={tool.logoUrl} alt={tool.name} className="w-6 h-6 rounded object-contain bg-muted shrink-0" />
-                        ) : (
-                          <div className="w-6 h-6 rounded bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                            <span className="font-mono text-primary text-[10px] font-bold">{tool.name[0]}</span>
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate" data-testid={`text-top-tool-name-${tool.id}`}>
-                            {tool.name}
-                          </div>
-                          <div className="text-[10px] font-mono text-muted-foreground">{tool.category}</div>
+                      {tool.logoUrl ? (
+                        <img src={tool.logoUrl} alt={tool.name} className="w-6 h-6 rounded object-contain bg-muted shrink-0" />
+                      ) : (
+                        <div className="w-6 h-6 rounded bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                          <span className="font-mono text-primary text-[10px] font-bold">{tool.name[0]}</span>
                         </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate" data-testid={`text-top-tool-name-${tool.id}`}>
+                          {tool.name}
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground">{tool.category}</div>
                       </div>
-                      <ScoreBar label="Happiness" value={tool.happinessScore} />
+                      <TrendBadge
+                        happinessScore={tool.happinessScore}
+                        rageIndex={tool.rageIndex}
+                        voteCount={tool.voteCount}
+                      />
                     </div>
-                  </Link>
+
+                    {/* All 4 scores */}
+                    <div
+                      className="space-y-1.5 cursor-pointer"
+                      onClick={() => navigate(`/tools/${tool.id}`)}
+                    >
+                      <ScoreBar label="DX Score" value={tool.dxScore} />
+                      <ScoreBar label="Price" value={tool.priceScore} />
+                      <ScoreBar label="Happiness" value={tool.happinessScore} />
+                      <ScoreBar label="Rage" value={tool.rageIndex} inverse />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border">
+                      <span className="text-[10px] font-mono text-muted-foreground tabular-nums">{tool.voteCount} votes</span>
+                      <ShareButton
+                        title={tool.name}
+                        url={`${window.location.origin}/tools/${tool.id}`}
+                        size="xs"
+                      />
+                    </div>
+                  </div>
                 ))}
           </div>
         </div>

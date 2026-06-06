@@ -2,6 +2,7 @@ import { useParams, Link } from "wouter";
 import { ArrowLeft, Clock, BookOpen, Bug, GraduationCap, User, Calendar } from "lucide-react";
 import { useGetGuide, getGetGuideQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ShareButton from "@/components/ShareButton";
 
 const TYPE_CONFIG = {
   guide: { label: "Guide", icon: BookOpen, color: "text-primary bg-primary/10 border-primary/20" },
@@ -45,9 +46,12 @@ export default function GuideDetailPage() {
   return (
     <div className="max-w-2xl space-y-8 animate-fade-in-up">
       {/* Back */}
-      <Link href="/guides" className="inline-flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-primary transition-colors" data-testid="link-back">
-        <ArrowLeft className="w-3.5 h-3.5" /> back to guides
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/guides" className="inline-flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-primary transition-colors" data-testid="link-back">
+          <ArrowLeft className="w-3.5 h-3.5" /> back to guides
+        </Link>
+        <ShareButton title={guide.title} size="sm" />
+      </div>
 
       {/* Header */}
       <div className="space-y-4">
@@ -105,10 +109,11 @@ export default function GuideDetailPage() {
       )}
 
       {/* Footer nav */}
-      <div className="border-t border-border pt-6">
+      <div className="border-t border-border pt-6 flex items-center justify-between">
         <Link href="/guides" className="inline-flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> All guides
         </Link>
+        <ShareButton title={guide.title} size="sm" />
       </div>
     </div>
   );
