@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Astro Dev - Daily developer resource site API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: tools
+    description: Tool scorecard operations
+  - name: guides
+    description: Daily guides and articles
+  - name: hn
+    description: Hacker News curation
+  - name: votes
+    description: Community voting
 paths:
   /healthz:
     get:
@@ -24,6 +32,237 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /tools:
+    get:
+      operationId: listTools
+      tags: [tools]
+      summary: List all tool scorecards
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category (hosting, database, payments, etc.)
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: Sort by (happiness, dx, rage, price)
+      responses:
+        "200":
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tool"
+    post:
+      operationId: createTool
+      tags: [tools]
+      summary: Create a new tool scorecard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToolInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+
+  /tools/{id}:
+    get:
+      operationId: getTool
+      tags: [tools]
+      summary: Get a single tool scorecard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tool details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+        "404":
+          description: Not found
+
+  /tools/top:
+    get:
+      operationId: getTopTools
+      tags: [tools]
+      summary: Get top-rated tools by happiness score
+      responses:
+        "200":
+          description: Top tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tool"
+
+  /tools/categories:
+    get:
+      operationId: getToolCategories
+      tags: [tools]
+      summary: Get available tool categories with counts
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryCount"
+
+  /guides:
+    get:
+      operationId: listGuides
+      tags: [guides]
+      summary: List guides and articles
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by type (guide, error-fix, tutorial)
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter by tag
+      responses:
+        "200":
+          description: List of guides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guide"
+    post:
+      operationId: createGuide
+      tags: [guides]
+      summary: Create a new guide
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuideInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guide"
+
+  /guides/{id}:
+    get:
+      operationId: getGuide
+      tags: [guides]
+      summary: Get a single guide
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Guide details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guide"
+        "404":
+          description: Not found
+
+  /guides/daily:
+    get:
+      operationId: getDailyGuide
+      tags: [guides]
+      summary: Get today's featured guide
+      responses:
+        "200":
+          description: Today's guide
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guide"
+
+  /hn/curated:
+    get:
+      operationId: getHnCurated
+      tags: [hn]
+      summary: Get curated Hacker News stories
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          description: Number of stories to return
+      responses:
+        "200":
+          description: Curated HN stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HnStory"
+
+  /votes/tool/{toolId}:
+    post:
+      operationId: voteOnTool
+      tags: [votes]
+      summary: Vote on a tool
+      parameters:
+        - name: toolId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteInput"
+      responses:
+        "200":
+          description: Vote recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteResult"
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [tools]
+      summary: Get site-wide stats summary
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +273,200 @@ components:
       required:
         - status
 
+    Tool:
+      type: object
+      required: [id, name, slug, category, dxScore, priceScore, rageIndex, happinessScore, tagline, website]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+        tagline:
+          type: string
+        website:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        dxScore:
+          type: number
+          description: Developer experience score 0-10
+        priceScore:
+          type: number
+          description: Price value score 0-10
+        rageIndex:
+          type: number
+          description: Frustration index 0-10 (lower is better)
+        happinessScore:
+          type: number
+          description: Overall happiness score 0-10
+        voteCount:
+          type: integer
+        description:
+          type: ["string", "null"]
+        pros:
+          type: ["string", "null"]
+        cons:
+          type: ["string", "null"]
+        pricingTier:
+          type: string
+          description: free, freemium, paid
+        createdAt:
+          type: string
+
+    ToolInput:
+      type: object
+      required: [name, category, tagline, website, dxScore, priceScore, rageIndex, happinessScore, pricingTier]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+        tagline:
+          type: string
+        website:
+          type: string
+        logoUrl:
+          type: string
+        dxScore:
+          type: number
+        priceScore:
+          type: number
+        rageIndex:
+          type: number
+        happinessScore:
+          type: number
+        description:
+          type: string
+        pros:
+          type: string
+        cons:
+          type: string
+        pricingTier:
+          type: string
+
+    Guide:
+      type: object
+      required: [id, title, slug, type, excerpt, readingTime, publishedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        type:
+          type: string
+          description: guide, error-fix, tutorial
+        excerpt:
+          type: string
+        content:
+          type: ["string", "null"]
+        tags:
+          type: ["string", "null"]
+        readingTime:
+          type: integer
+        isFeatured:
+          type: boolean
+        publishedAt:
+          type: string
+        author:
+          type: ["string", "null"]
+
+    GuideInput:
+      type: object
+      required: [title, type, excerpt, readingTime]
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        type:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        tags:
+          type: string
+        readingTime:
+          type: integer
+        isFeatured:
+          type: boolean
+        author:
+          type: string
+
+    HnStory:
+      type: object
+      required: [id, title, url, score, commentCount, postedAt]
+      properties:
+        id:
+          type: integer
+        hnId:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        domain:
+          type: ["string", "null"]
+        score:
+          type: integer
+        commentCount:
+          type: integer
+        author:
+          type: ["string", "null"]
+        postedAt:
+          type: string
+        curatedAt:
+          type: string
+        curatorNote:
+          type: ["string", "null"]
+        tag:
+          type: ["string", "null"]
+
+    VoteInput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          description: up or down
+
+    VoteResult:
+      type: object
+      required: [success, voteCount]
+      properties:
+        success:
+          type: boolean
+        voteCount:
+          type: integer
+
+    CategoryCount:
+      type: object
+      required: [category, count]
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+
+    StatsSummary:
+      type: object
+      required: [totalTools, totalGuides, totalHnStories, avgHappinessScore]
+      properties:
+        totalTools:
+          type: integer
+        totalGuides:
+          type: integer
+        totalHnStories:
+          type: integer
+        avgHappinessScore:
+          type: number
+        topCategory:
+          type: string

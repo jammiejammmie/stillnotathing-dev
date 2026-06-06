@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Astro — Daily Dev Resource"
+version = "1.0.0"
+id = "artifacts/astro-dev"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25863
+
+[services.development]
+run = "pnpm --filter @workspace/astro-dev run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/astro-dev", "run", "build" ]
+publicDir = "artifacts/astro-dev/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25863"
+BASE_PATH = "/"
