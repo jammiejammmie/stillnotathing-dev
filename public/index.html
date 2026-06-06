@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StillNotAThing — Developer Morning Page</title>
+<meta name="description" content="Daily dev resources, tool scorecards, HN stories, and guides for indie hackers and solo builders.">
+<meta property="og:title" content="StillNotAThing — Developer Morning Page">
+<meta property="og:description" content="Tools, guides, and curated HN stories for indie hackers and solo builders.">
+<meta property="og:url" content="https://stillnotathing.com">
+<link rel="canonical" href="https://stillnotathing.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --card: #13131f;
+  --border: #1e1e2e;
+  --text: #e8e8f0;
+  --muted: #6b6b80;
+  --accent: #00d4aa;
+  --accent2: #7c5cfc;
+  --up: #22c55e;
+  --down: #ef4444;
+  --warn: #f59e0b;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link.active { color: var(--accent); }
+
+/* HERO */
+.hero {
+  padding: 40px 24px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.hero-title .cursor {
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  background: var(--accent);
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+
+.hero-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+/* STATS */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+/* SECTIONS */
+.section {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-more {
+  font-size: 0.75rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* GUIDE CARD */
+.guide-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.guide-card:hover { border-color: #2e2e40; }
+
+.guide-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.guide-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(0,212,170,0.1);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.guide-read {
+  font-size: 0.7rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.share-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.share-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.guide-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.guide-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.empty-state {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* HN STORIES */
+.hn-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.hn-item:last-child { border-bottom: none; }
+
+.hn-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--border);
+  font-weight: 700;
+  min-width: 18px;
+  margin-top: 3px;
+}
+
+.hn-content { flex: 1; }
+
+.hn-title {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 4px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+
+.hn-title:hover { color: var(--accent); }
+
+.hn-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hn-italic {
+  font-style: italic;
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* TOOL CARDS */
+.tool-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tool-card:hover { border-color: #2e2e40; }
+.tool-card:last-child { margin-bottom: 0; }
+
+.tool-header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tool-left { display: flex; align-items: center; gap: 10px; }
+
+.tool-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.tool-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.tool-cat {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.trend-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+
+.trend-up { background: rgba(34,197,94,0.1); color: var(--up); }
+.trend-down { background: rgba(239,68,68,0.1); color: var(--down); }
+.trend-flat { background: rgba(107,107,128,0.1); color: var(--muted); }
+
+.tool-scores { padding: 0 16px 4px; }
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.score-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--muted);
+  width: 44px;
+}
+
+.score-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.fill-dx { background: var(--accent); }
+.fill-price { background: var(--accent2); }
+.fill-rage { background: var(--down); }
+
+.score-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 22px;
+  text-align: right;
+  color: var(--text);
+}
+
+.tool-happiness {
+  margin: 6px 16px 10px;
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.happiness-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.happiness-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.happiness-score span {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.tool-vote {
+  border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vote-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.vote-btns { display: flex; gap: 6px; }
+
+.vote-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.vote-btn:hover { border-color: var(--accent); color: var(--accent); }
+.vote-btn.voted { background: var(--accent); border-color: var(--accent); color: #000; }
+
+/* TICKER */
+.ticker {
+  background: rgba(0,212,170,0.05);
+  border-bottom: 1px solid rgba(0,212,170,0.1);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.ticker-live {
+  background: var(--accent);
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.ticker-scroll {
+  display: flex;
+  gap: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  white-space: nowrap;
+  animation: scroll 30s linear infinite;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.t-up { color: var(--up); }
+.t-down { color: var(--down); }
+.t-warn { color: var(--warn); }
+
+/* RAGE BADGE */
+.rage-badge {
+  margin: 0 16px 10px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.15);
+  color: var(--down);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* FOOTER */
+footer {
+  padding: 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    StillNotAThing
+  </div>
+  <nav>
+    <a href="#" class="nav-link active">Home</a>
+    <a href="#tools" class="nav-link">Tools</a>
+    <a href="#guides" class="nav-link">Guides</a>
+  </nav>
+</header>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-live">LIVE</div>
+  <div class="ticker-scroll" id="ticker-content">
+    <span><span class="t-up">↑</span> Supabase happiness rising this week</span>
+    <span>•</span>
+    <span><span class="t-warn">⚠</span> Vercel pricing changes — community reacting</span>
+    <span>•</span>
+    <span><span class="t-down">↓</span> PlanetScale rage index spiking</span>
+    <span>•</span>
+    <span><span class="t-up">↑</span> Railway gaining fast among solo builders</span>
+    <span>•</span>
+    <span>📊 Community votes updating daily</span>
+    <span>•</span>
+    <span><span class="t-up">↑</span> Supabase happiness rising this week</span>
+    <span>•</span>
+    <span><span class="t-warn">⚠</span> Vercel pricing changes — community reacting</span>
+    <span>•</span>
+    <span><span class="t-down">↓</span> PlanetScale rage index spiking</span>
+    <span>•</span>
+    <span><span class="t-up">↑</span> Railway gaining fast among solo builders</span>
+    <span>•</span>
+    <span>📊 Community votes updating daily</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-date" id="hero-date">MORNING BRIEFING // Loading...</div>
+  <h1 class="hero-title">What's shipping today<span class="cursor"></span></h1>
+  <p class="hero-sub">Tools, guides, and curated HN stories for indie hackers and solo builders.</p>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-tools">—</div>
+      <div class="stat-label">tools indexed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-guides">—</div>
+      <div class="stat-label">guides published</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-hn">10</div>
+      <div class="stat-label">hn stories</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-happiness">—</div>
+      <div class="stat-label">avg happiness</div>
+    </div>
+  </div>
+</div>
+
+<!-- TODAY'S GUIDE -->
+<div class="section" id="guides">
+  <div class="section-header">
+    <div class="section-title">📖 Today's Guide</div>
+    <a href="#" class="section-more">all guides →</a>
+  </div>
+  <div id="guide-container">
+    <div class="loading">Loading guide...</div>
+  </div>
+</div>
+
+<!-- CURATED HN -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">📰 Curated HN</div>
+    <a href="#" class="section-more">all stories →</a>
+  </div>
+  <div id="hn-container">
+    <div class="loading">Loading stories...</div>
+  </div>
+</div>
+
+<!-- TOP TOOLS -->
+<div class="section" id="tools">
+  <div class="section-header">
+    <div class="section-title">📈 Top Tools</div>
+    <a href="#" class="section-more">all →</a>
+  </div>
+  <div id="tools-container">
+    <div class="loading">Loading tools...</div>
+  </div>
+</div>
+
+<footer>
+  <div>StillNotAThing — Daily dev resources for indie hackers</div>
+  <div style="margin-top:8px">Built with ❤️ for solo builders · <a href="#">Submit a tool</a> · <a href="#">Newsletter</a></div>
+</footer>
+
+<script>
+// DATE
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const now = new Date();
+document.getElementById('hero-date').textContent = `MORNING BRIEFING // ${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+
+// SHARE
+function share(title, url) {
+  if (navigator.share) {
+    navigator.share({ title, url: url || location.href });
+  } else {
+    navigator.clipboard.writeText(url || location.href);
+    alert('Link copied!');
+  }
+}
+
+// VOTE
+function vote(btn, type) {
+  const btns = btn.closest('.vote-btns').querySelectorAll('.vote-btn');
+  btns.forEach(b => b.classList.remove('voted'));
+  btn.classList.add('voted');
+}
+
+// LOAD HN
+async function loadHN() {
+  try {
+    const res = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+    const ids = await res.json();
+    const top10 = ids.slice(0, 10);
+    const stories = await Promise.all(top10.map(id =>
+      fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json())
+    ));
+
+    const comments = [
+      'Worth reading — especially the part about pricing.',
+      'This will affect how you build your next SaaS.',
+      'The indie maker angle here is underrated.',
+      'Practical. No fluff. Read this one.',
+      'Lots of discussion in the comments.',
+      'Good context on where this is heading.',
+      'This changes the calculus for solo builders.',
+      'Short but worth your time.',
+      'Community is split on this.',
+      'The benchmarks are interesting.'
+    ];
+
+    const container = document.getElementById('hn-container');
+    container.innerHTML = stories.map((s, i) => `
+      <div class="hn-item">
+        <div class="hn-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="hn-content">
+          <a class="hn-title" href="${s.url || `https://news.ycombinator.com/item?id=${s.id}`}" target="_blank">${s.title}</a>
+          <div class="hn-meta">
+            <span>${s.score} pts</span>
+            <span>${s.descendants || 0} comments</span>
+            <span class="hn-italic">${comments[i]}</span>
+            <button class="share-btn" onclick="share('${s.title.replace(/'/g,"\\'")}', '${s.url || `https://news.ycombinator.com/item?id=${s.id}`}')">↗ share</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('stat-hn').textContent = '10';
+  } catch(e) {
+    document.getElementById('hn-container').innerHTML = '<div class="empty-state">Could not load HN stories.</div>';
+  }
+}
+
+// LOAD TOOLS FROM SUPABASE
+async function loadTools() {
+  const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
+
+  const defaultTools = [
+    { name: 'Vercel', category: 'hosting', emoji: '⬡', trend: 'flat', dx: 8.8, price: 5.2, rage: 5.8, happiness: 7.4, happiness_emoji: '😐', rage_note: 'Pricing complaints up this week' },
+    { name: 'Supabase', category: 'database', emoji: '🗄', trend: 'up', dx: 9.1, price: 8.6, rage: 1.8, happiness: 9.2, happiness_emoji: '🥰', rage_note: null },
+    { name: 'Netlify', category: 'hosting', emoji: '🌐', trend: 'up', dx: 8.2, price: 7.8, rage: 2.8, happiness: 8.1, happiness_emoji: '😊', rage_note: null },
+    { name: 'Stripe', category: 'payments', emoji: '💳', trend: 'flat', dx: 9.4, price: 6.0, rage: 2.2, happiness: 8.7, happiness_emoji: '😄', rage_note: null },
+    { name: 'Railway', category: 'hosting', emoji: '🚂', trend: 'up', dx: 8.7, price: 7.4, rage: 1.4, happiness: 8.9, happiness_emoji: '🤩', rage_note: null },
+  ];
+
+  let tools = defaultTools;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tools?order=happiness.desc&limit=5`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.length > 0) tools = data;
+    }
+  } catch(e) {}
+
+  const container = document.getElementById('tools-container');
+  container.innerHTML = tools.map(t => `
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-left">
+          <div class="tool-icon">${t.emoji || '🔧'}</div>
+          <div>
+            <div class="tool-name">${t.name}</div>
+            <div class="tool-cat">${t.category}</div>
+          </div>
+        </div>
+        <div class="trend-badge ${t.trend === 'up' ? 'trend-up' : t.trend === 'down' ? 'trend-down' : 'trend-flat'}">
+          ${t.trend === 'up' ? '↑ Rising' : t.trend === 'down' ? '↓ Falling' : '→ Stable'}
+        </div>
+      </div>
+      <div class="tool-scores">
+        <div class="score-row">
+          <div class="score-label">DX</div>
+          <div class="score-track"><div class="score-fill fill-dx" style="width:${t.dx*10}%"></div></div>
+          <div class="score-val">${t.dx}</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Price</div>
+          <div class="score-track"><div class="score-fill fill-price" style="width:${t.price*10}%"></div></div>
+          <div class="score-val">${t.price}</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Rage</div>
+          <div class="score-track"><div class="score-fill fill-rage" style="width:${t.rage*10}%"></div></div>
+          <div class="score-val">${t.rage}</div>
+        </div>
+      </div>
+      ${t.rage_note ? `<div class="rage-badge">🔥 ${t.rage_note}</div>` : ''}
+      <div class="tool-happiness">
+        <div class="happiness-label">Indie Hacker Happiness</div>
+        <div class="happiness-score">${t.happiness} <span>/ 10</span> ${t.happiness_emoji || ''}</div>
+      </div>
+      <div class="tool-vote">
+        <div class="vote-label">Rate your experience</div>
+        <div class="vote-btns">
+          <button class="vote-btn" onclick="vote(this,'love')">😍 Love it</button>
+          <button class="vote-btn" onclick="vote(this,'hate')">😤 Hate it</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const avgHappiness = (tools.reduce((a,t) => a + t.happiness, 0) / tools.length).toFixed(1);
+  document.getElementById('stat-tools').textContent = tools.length;
+  document.getElementById('stat-happiness').textContent = avgHappiness;
+}
+
+// LOAD GUIDES FROM SUPABASE
+async function loadGuides() {
+  const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
+
+  let guides = [];
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/guides?order=created_at.desc&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (res.ok) guides = await res.json();
+  } catch(e) {}
+
+  const container = document.getElementById('guide-container');
+
+  if (guides.length > 0) {
+    const g = guides[0];
+    container.innerHTML = `
+      <div class="guide-card">
+        <div class="guide-meta">
+          <span class="guide-tag">Guide</span>
+          <div class="guide-read">
+            <span>${g.read_time || '5m'} read</span>
+            <button class="share-btn" onclick="share('${(g.title||'').replace(/'/g,"\\'")}')">↗ share</button>
+          </div>
+        </div>
+        <div class="guide-title">${g.title}</div>
+        <div class="guide-desc">${g.description || ''}</div>
+      </div>
+    `;
+    document.getElementById('stat-guides').textContent = '1+';
+  } else {
+    container.innerHTML = '<div class="empty-state">No guide today yet. Check back soon.</div>';
+    document.getElementById('stat-guides').textContent = '0';
+  }
+}
+
+// INIT
+loadHN();
+loadTools();
+loadGuides();
+</script>
+</body>
+</html>
