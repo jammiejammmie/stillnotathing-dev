@@ -1,6 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { Menu, X, Zap } from "lucide-react";
+import NewsletterForm from "./NewsletterForm";
+import PushOptIn from "./PushOptIn";
+import SeoHead from "./SeoHead";
+import { siteSchema } from "./SeoHead";
 
 const navLinks = [
   { href: "/", label: "Today" },
@@ -15,6 +19,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Default SEO — pages override via SeoHead */}
+      <SeoHead schema={siteSchema()} />
+
       {/* Top nav */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
@@ -46,6 +53,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            <div className="ml-2 pl-2 border-l border-border">
+              <PushOptIn />
+            </div>
           </nav>
 
           {/* Mobile toggle */}
@@ -78,6 +88,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            <div className="px-3 pt-2">
+              <PushOptIn />
+            </div>
           </div>
         )}
       </header>
@@ -87,10 +100,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <footer className="border-t border-border mt-16 py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-muted-foreground">
-          <span>ASTRO_ — daily dev resource for indie hackers</span>
-          <span>{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+      {/* Footer */}
+      <footer className="border-t border-border mt-16 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="w-4 h-4 text-primary" />
+                <span className="font-mono font-bold text-sm tracking-widest">ASTRO_</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Daily dev resources for indie hackers and solo builders. Tool scorecards, guides, and curated HN.
+              </p>
+            </div>
+
+            {/* Nav */}
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Pages</div>
+              <div className="space-y-1.5">
+                {navLinks.map((link) => (
+                  <div key={link.href}>
+                    <Link href={link.href} className="text-xs font-mono text-muted-foreground hover:text-primary transition-colors">
+                      {link.label}
+                    </Link>
+                  </div>
+                ))}
+                <div>
+                  <Link href="/compare" className="text-xs font-mono text-muted-foreground hover:text-primary transition-colors">
+                    Compare Tools
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Newsletter */}
+            <div>
+              <NewsletterForm />
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-6 flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>ASTRO_ — daily dev resource for indie hackers</span>
+            <span>{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+          </div>
         </div>
       </footer>
     </div>

@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { useLocation } from "wouter";
+import { ThumbsUp, ThumbsDown, GitCompare } from "lucide-react";
 import ScoreBar from "./ScoreBar";
 import ShareButton from "./ShareButton";
 import TrendBadge from "./TrendBadge";
 import type { Tool } from "@workspace/api-client-react";
-import { useVoteOnTool, useGetTool, getGetToolQueryKey, getListToolsQueryKey, getGetTopToolsQueryKey } from "@workspace/api-client-react";
+import { useVoteOnTool, getGetToolQueryKey, getListToolsQueryKey, getGetTopToolsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCompare } from "@/context/CompareContext";
 
 interface ToolCardProps {
   tool: Tool;
@@ -23,10 +24,12 @@ export default function ToolCard({ tool: initialTool }: ToolCardProps) {
   const queryClient = useQueryClient();
   const [localVoteDelta, setLocalVoteDelta] = useState(0);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
+  const { isInCompare, addToCompare, removeFromCompare, canAddMore } = useCompare();
+  const inCompare = isInCompare(initialTool.id);
 
   const { mutate: vote } = useVoteOnTool({
     mutation: {
-      onMutate: ({ params, data }) => {
+      onMutate: ({ data }) => {
         const dir = data.direction;
         if (voted === dir) return;
         setVoted(dir);
@@ -47,12 +50,20 @@ export default function ToolCard({ tool: initialTool }: ToolCardProps) {
     vote({ params: { id: initialTool.id }, data: { direction } });
   };
 
+  const handleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inCompare) removeFromCompare(initialTool.id);
+    else if (canAddMore) addToCompare(initialTool.id);
+  };
+
   const displayVotes = initialTool.voteCount + localVoteDelta;
   const toolUrl = `${window.location.origin}/tools/${initialTool.id}`;
 
   return (
     <div
-      className="group border border-border rounded-lg p-4 bg-card hover:border-primary/30 hover:bg-card/80 transition-all duration-200 h-full flex flex-col"
+      className={`group border rounded-lg p-4 bg-card hover:bg-card/80 transition-all duration-200 h-full flex flex-col
+        ${inCompare ? "border-primary/50 ring-1 ring-primary/20" : "border-border hover:border-primary/30"}`}
       data-testid={`card-tool-${initialTool.id}`}
     >
       {/* Header — clickable */}
@@ -103,7 +114,7 @@ export default function ToolCard({ tool: initialTool }: ToolCardProps) {
         </div>
       </div>
 
-      {/* Footer — voting + share, not part of the link */}
+      {/* Footer — actions */}
       <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <button
@@ -134,6 +145,20 @@ export default function ToolCard({ tool: initialTool }: ToolCardProps) {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleCompare}
+            disabled={!inCompare && !canAddMore}
+            data-testid={`button-compare-${initialTool.id}`}
+            title={inCompare ? "Remove from compare" : canAddMore ? "Add to compare" : "Compare limit reached (3)"}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded border font-mono text-[10px] transition-all duration-150
+              ${inCompare
+                ? "text-primary border-primary/40 bg-primary/10"
+                : "text-muted-foreground border-border hover:text-primary hover:border-primary/30 hover:bg-primary/5 disabled:opacity-30 disabled:cursor-not-allowed"
+              }`}
+          >
+            <GitCompare className="w-3 h-3" />
+            {inCompare ? "added" : "compare"}
+          </button>
           <ShareButton title={initialTool.name} url={toolUrl} size="xs" />
           <span
             className="text-[10px] font-mono text-primary/70 group-hover:text-primary transition-colors cursor-pointer"

@@ -5,6 +5,9 @@ import {
   useGetToolCategories,
 } from "@workspace/api-client-react";
 import ToolCard from "@/components/ToolCard";
+import CompareBar from "@/components/CompareBar";
+import SeoHead from "@/components/SeoHead";
+import { siteSchema } from "@/components/SeoHead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 
@@ -28,7 +31,19 @@ export default function ToolsPage() {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up pb-24">
+      <SeoHead
+        title="Dev Tool Rankings"
+        description="Tool scorecards with DX Score, Price Score, Rage Index, and Happiness — rated by indie hackers."
+        path="/tools"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Dev Tool Rankings",
+          description: "Developer tools rated by indie hackers",
+        }}
+      />
+
       {/* Header */}
       <div className="border-b border-border pb-5">
         <span className="font-mono text-xs text-primary uppercase tracking-widest">Tool Scorecards</span>
@@ -126,6 +141,9 @@ export default function ToolsPage() {
           <div className="font-mono text-muted-foreground/50 text-xs mt-2">Try a different filter</div>
         </div>
       )}
+
+      {/* Compare bar — fixed at bottom */}
+      <CompareBar />
     </div>
   );
 }
