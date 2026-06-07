@@ -249,6 +249,8 @@ footer a{color:var(--accent);text-decoration:none}
   <div class="nav-tab" onclick="showPage('hn')">📰 HN Feed</div>
   <div class="nav-tab" onclick="showPage('bookmarks')">🔖 Saved</div>
   <div class="nav-tab" onclick="showPage('profile')">👤 Profile</div>
+  <div class="nav-tab" onclick="window.location.href='/radar.html'">🚀 Radar</div>
+  <div class="nav-tab" onclick="window.location.href='/calc.html'">💰 Calc</div>
 </div>
 
 <!-- HOME PAGE -->
@@ -370,7 +372,7 @@ footer a{color:var(--accent);text-decoration:none}
 
 <footer>
   <div>StillNotAThing.com — Daily dev resources for indie hackers</div>
-  <div style="margin-top:6px"><a href="#" onclick="showPage('submit')">Submit a tool</a> · <a href="https://github.com/jammiejammmie/stillnotathing-dev" target="_blank">GitHub</a></div>
+  <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center"><a href="/radar.html">🚀 Radar</a><a href="/calc.html">💰 Calc</a><a href="/badge.html">📛 Badges</a><a href="/roadmap.html">🗺️ Roadmap</a><a href="#" onclick="showPage('submit')">Submit a tool</a><a href="https://github.com/jammiejammmie/stillnotathing-dev/discussions" target="_blank">Discuss</a></div>
 </footer>
 
 <div class="toast" id="toast"></div>
