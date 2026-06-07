@@ -48,15 +48,9 @@ jobs:
           function fetchReddit(sub) {
             return httpFetch('https://www.reddit.com/r/' + sub + '/hot.json?limit=5', {
               headers: { 'User-Agent': 'StillNotAThing/1.0' }
-            }).then(function(r) {
-              return r.json();
-            }).then(function(d) {
+            }).then(function(r) { return r.json(); }).then(function(d) {
               return d.data.children.map(function(p) {
-                return {
-                  title: p.data.title,
-                  score: p.data.score,
-                  comments: p.data.num_comments
-                };
+                return { title: p.data.title, score: p.data.score, comments: p.data.num_comments };
               });
             }).catch(function() { return []; });
           }
@@ -68,26 +62,19 @@ jobs:
               { name: 'Netlify', url: 'https://www.netlifystatus.com/api/v2/summary.json' },
               { name: 'GitHub', url: 'https://www.githubstatus.com/api/v2/summary.json' }
             ];
-            var promises = tools.map(function(t) {
-              return httpFetch(t.url).then(function(r) {
-                return r.json();
-              }).then(function(d) {
+            return Promise.all(tools.map(function(t) {
+              return httpFetch(t.url).then(function(r) { return r.json(); }).then(function(d) {
                 var active = (d.incidents || []).filter(function(i) { return i.status !== 'resolved'; });
-                if (active.length > 0) {
-                  return { tool: t.name, incident: active[0].name, status: active[0].status };
-                }
+                if (active.length > 0) return { tool: t.name, incident: active[0].name, status: active[0].status };
                 return null;
               }).catch(function() { return null; });
-            });
-            return Promise.all(promises).then(function(results) {
-              return results.filter(function(r) { return r !== null; });
-            });
+            })).then(function(results) { return results.filter(Boolean); });
           }
 
           function callClaude(prompt) {
             var body = JSON.stringify({
               model: 'claude-haiku-4-5-20251001',
-              max_tokens: 2000,
+              max_tokens: 2500,
               messages: [{ role: 'user', content: prompt }]
             });
             return httpFetch('https://api.anthropic.com/v1/messages', {
@@ -99,14 +86,10 @@ jobs:
                 'Content-Length': Buffer.byteLength(body).toString()
               },
               body: body
-            }).then(function(r) {
-              return r.json();
-            }).then(function(d) {
-              return d.content[0].text;
-            });
+            }).then(function(r) { return r.json(); }).then(function(d) { return d.content[0].text; });
           }
 
-          function saveArticle(article) {
+          function saveGuide(article) {
             var body = JSON.stringify(article);
             return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides', {
               method: 'POST',
@@ -121,13 +104,75 @@ jobs:
             });
           }
 
-          function sleep(ms) {
-            return new Promise(function(r) { setTimeout(r, ms); });
+          function saveRedditDrafts(drafts) {
+            var body = JSON.stringify({
+              name: 'reddit_drafts_' + new Date().toISOString().split('T')[0],
+              description: JSON.stringify(drafts),
+              category: 'reddit',
+              status: 'draft'
+            });
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/tool_submissions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+                'Prefer': 'return=minimal',
+                'Content-Length': Buffer.byteLength(body).toString()
+              },
+              body: body
+            });
           }
 
-          function parseArticle(text) {
-            var clean = text.replace(/^```json\n?|\n?```$/g, '').trim();
-            return JSON.parse(clean);
+          function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+          function parseJSON(text) {
+            return JSON.parse(text.replace(/^```json\n?|\n?```$/g, '').trim());
+          }
+
+          function buildMainPrompt(tool, angle, cat, reddit) {
+            return 'You are a senior developer writing for StillNotAThing.com, a daily resource for indie hackers. Readers are experienced developers who immediately notice inaccurate information. Topic: "' + tool + ' - ' + angle + '". Reddit context: ' + reddit + '. REQUIREMENTS: (1) Accuracy first - if unsure about version numbers or prices, say "verify in official docs" explicitly. (2) Include exact version numbers where relevant. (3) Include 2-3 real error messages developers see in console. (4) All code must be production-ready patterns. (5) Link to official docs in markdown. (6) Include 2 internal links formatted as [topic](/?guide=keyword). (7) End with section "## What am I missing?" inviting corrections and additions in comments. (8) TL;DR at top. (9) 800-1000 words. Return ONLY valid JSON on one line: {"title":"SEO title under 65 chars include year 2026","description":"hook under 160 chars","content":"full markdown","category":"' + cat + '","read_time":"5 min read","tags":["' + tool.toLowerCase() + '","guide","2026"]}';
+          }
+
+          function buildErrorPrompt(tool, issue) {
+            return 'Precise troubleshooting guide for StillNotAThing.com. Readers have a broken production app at 2am. Problem: "' + tool + ' - ' + issue + '". REQUIREMENTS: (1) TL;DR first: one sentence cause + one sentence fix. (2) 3-5 EXACT error messages from real console output. (3) Show broken code then exact fix side by side. (4) If uncertain about version-specific behavior, say so explicitly rather than guessing. (5) Section "Still broken? Check these too" with 3 related issues. (6) End with "Found a different variation? Drop it in the comments" to invite community corrections. (7) 2 internal links: [related](/?guide=keyword). (8) Official docs link. (9) 600-800 words. Return ONLY valid JSON on one line: {"title":"' + tool + ': ' + issue + ' [2026 fix]","description":"Exact error + one-line fix under 160 chars.","content":"full markdown","category":"devtools","read_time":"4 min read","tags":["' + tool.toLowerCase().replace(/ /g, '-') + '","error","fix","2026"]}';
+          }
+
+          function buildRedditDraft(article) {
+            var questionsByCategory = {
+              hosting: 'Which hosting provider are you using in 2026 and why? Would love to hear what others have moved to.',
+              database: 'What database setup are you running for your indie projects? Curious if others hit similar issues.',
+              payments: 'How are you handling this in your SaaS? Any edge cases I might have missed?',
+              auth: 'Which auth solution are you using in 2026? Still evaluating alternatives myself.',
+              email: 'What email provider are you on? Happy to compare notes.',
+              devtools: 'Anyone hit a different variation of this? Drop your version in the comments.'
+            };
+            var question = questionsByCategory[article.category] || questionsByCategory.devtools;
+
+            var subreddits = ['r/webdev', 'r/indiehackers', 'r/SaaS', 'r/nextjs', 'r/Supabase'];
+            var scored = subreddits.map(function(sub) {
+              var score = 50;
+              var titleLower = (article.title || '').toLowerCase();
+              if (sub === 'r/webdev') score += 20;
+              if (sub === 'r/nextjs' && (titleLower.includes('next') || titleLower.includes('vercel'))) score += 30;
+              if (sub === 'r/Supabase' && (titleLower.includes('supabase') || article.category === 'database')) score += 40;
+              if (sub === 'r/indiehackers') score += 15;
+              if (titleLower.includes('error') || titleLower.includes('fix') || titleLower.includes('breaking')) score += 15;
+              return { subreddit: sub, score: score };
+            }).sort(function(a, b) { return b.score - a.score; });
+
+            var body = (article.description || '')
+              + '\n\n---\n\n'
+              + 'Happy to clarify anything in the comments. If I got something wrong or there\'s a better approach, please correct me �� I\'d rather be corrected than leave bad info out there.\n\n'
+              + question;
+
+            return {
+              article_title: article.title,
+              article_desc: article.description,
+              reddit_drafts: scored.slice(0, 3).map(function(sr) {
+                return { subreddit: sr.subreddit, score: sr.score, title: article.title, body: body };
+              })
+            };
           }
 
           function main() {
@@ -158,83 +203,77 @@ jobs:
             var err = errors[(today + 1) % errors.length];
 
             return Promise.all([
-              fetchReddit('webdev'),
-              fetchReddit('nextjs'),
-              fetchReddit('Supabase'),
-              checkToolStatus()
+              fetchReddit('webdev'), fetchReddit('nextjs'),
+              fetchReddit('Supabase'), checkToolStatus()
             ]).then(function(results) {
-              var webdev = results[0];
-              var nextjs = results[1];
-              var supabasePosts = results[2];
-              var incidents = results[3];
-
-              var allPosts = webdev.concat(nextjs).concat(supabasePosts)
+              var allPosts = results[0].concat(results[1]).concat(results[2])
                 .filter(function(p) { return p.score > 30; })
                 .sort(function(a, b) { return b.score - a.score; });
+              var incidents = results[3];
 
               var related = allPosts.filter(function(p) {
                 return p.title.toLowerCase().indexOf(g.tool.toLowerCase()) !== -1;
               }).slice(0, 2);
+              var redditCtx = related.length > 0
+                ? 'Reddit discussions: ' + related.map(function(p) { return '"' + p.title + '" (' + p.score + ' upvotes)'; }).join(', ')
+                : 'No specific Reddit discussions today.';
 
-              var reddit = related.length > 0
-                ? '\nReddit discussions: ' + related.map(function(p) { return '"' + p.title + '" (' + p.score + ' upvotes)'; }).join(', ')
-                : '';
-
-              // A. Incident articles
               var chain = Promise.resolve();
+              var generatedArticles = [];
+
+              // A. Incidents
               incidents.forEach(function(inc) {
                 chain = chain.then(function() {
-                  var prompt = 'Write for StillNotAThing.com. BREAKING: ' + inc.tool + ' is experiencing "' + inc.incident + '" (' + inc.status + '). Write urgent incident report and workarounds for indie hackers. 400-500 words. Return ONLY valid JSON on one line: {"title":"BREAKING title under 65 chars","description":"under 160 chars","content":"markdown content","category":"devtools","read_time":"3 min read","tags":["' + inc.tool.toLowerCase() + '","outage","fix"]}';
+                  var prompt = 'BREAKING incident report for StillNotAThing.com. ' + inc.tool + ' experiencing "' + inc.incident + '" (' + inc.status + '). Write urgent report with accurate workarounds. If unsure about specific details, say so. Include: what is down, immediate workarounds, how to check if affected, alternatives. 400-500 words. Return ONLY valid JSON: {"title":"BREAKING: ' + inc.tool + ' ' + inc.status + ' �� workarounds","description":"' + inc.tool + ' is down. Immediate workarounds inside.","content":"markdown","category":"devtools","read_time":"3 min read","tags":["' + inc.tool.toLowerCase() + '","outage","breaking"]}';
                   return callClaude(prompt).then(function(res) {
-                    return saveArticle(parseArticle(res));
+                    var article = parseJSON(res);
+                    generatedArticles.push(article);
+                    return saveGuide(article);
                   }).then(function() {
-                    console.log('Saved incident: ' + inc.tool);
-                    count++;
-                  }).catch(function(e) {
-                    console.error('Incident error: ' + e.message);
-                  }).then(function() {
-                    return sleep(1000);
-                  });
+                    console.log('Incident: ' + inc.tool); count++;
+                  }).catch(function(e) { console.error('Incident err: ' + e.message); })
+                  .then(function() { return sleep(1000); });
                 });
               });
 
               // B. Main guide
               chain = chain.then(function() {
-                var prompt = 'Write for StillNotAThing.com, daily radar for indie hackers. Topic: "' + g.tool + ' - ' + g.angle + '".' + reddit + ' Requirements: real developer voice, 2 code examples, 3 common mistakes, TL;DR section, 700-900 words, direct tone. Return ONLY valid JSON on one line: {"title":"SEO title under 65 chars","description":"hook under 160 chars","content":"full markdown article","category":"' + g.cat + '","read_time":"5 min read","tags":["' + g.tool.toLowerCase() + '","guide","indie-hacker"]}';
+                var prompt = buildMainPrompt(g.tool, g.angle, g.cat, redditCtx);
                 return callClaude(prompt).then(function(res) {
-                  return saveArticle(parseArticle(res));
+                  var article = parseJSON(res);
+                  generatedArticles.push(article);
+                  return saveGuide(article);
                 }).then(function() {
-                  console.log('Saved main guide: ' + g.tool);
-                  count++;
-                }).catch(function(e) {
-                  console.error('Guide error: ' + e.message);
-                });
+                  console.log('Guide: ' + g.tool); count++;
+                }).catch(function(e) { console.error('Guide err: ' + e.message); });
               });
 
-              // C. Error fix article
-              chain = chain.then(function() {
-                return sleep(1500);
-              }).then(function() {
-                var prompt = 'Fast troubleshooting guide for StillNotAThing.com. Problem: "' + err.tool + ' - ' + err.issue + '". Developer found this at 2am, get to the fix fast. Return ONLY valid JSON on one line: {"title":"' + err.tool + ' ' + err.issue + ' fix","description":"cause and fix in one sentence under 160 chars","content":"markdown: cause with code, fix with code, prevention. 400-500 words","category":"devtools","read_time":"3 min read","tags":["' + err.tool.toLowerCase().replace(/ /g, '-') + '","error","fix"]}';
+              // C. Error fix
+              chain = chain.then(function() { return sleep(1500); }).then(function() {
+                var prompt = buildErrorPrompt(err.tool, err.issue);
                 return callClaude(prompt).then(function(res) {
-                  return saveArticle(parseArticle(res));
+                  var article = parseJSON(res);
+                  generatedArticles.push(article);
+                  return saveGuide(article);
                 }).then(function() {
-                  console.log('Saved error fix: ' + err.tool);
-                  count++;
-                }).catch(function(e) {
-                  console.error('Error fix error: ' + e.message);
-                });
+                  console.log('Error fix: ' + err.tool); count++;
+                }).catch(function(e) { console.error('Error fix err: ' + e.message); });
+              });
+
+              // D. Reddit drafts
+              chain = chain.then(function() { return sleep(500); }).then(function() {
+                var drafts = generatedArticles.map(function(a) { return buildRedditDraft(a); });
+                return saveRedditDrafts(drafts).then(function() {
+                  console.log('Reddit drafts saved.');
+                }).catch(function(e) { console.error('Reddit draft err: ' + e.message); });
               });
 
               return chain.then(function() {
-                console.log('Done! ' + count + ' articles generated. ' + incidents.length + ' incidents covered.');
+                console.log('Done! ' + count + ' articles. ' + incidents.length + ' incidents.');
               });
             });
           }
 
-          main().catch(function(e) {
-            console.error(e);
-            process.exit(1);
-          });
+          main().catch(function(e) { console.error(e); process.exit(1); });
           JSEOF
           node run.js
