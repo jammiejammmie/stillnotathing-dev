@@ -820,7 +820,7 @@ async function loadHome() {
   renderMomentum(tools);
 
   // Opportunity Feed
-  renderOpportunityFeed(tools);
+  renderOpportunityFeed(tools);  // async - loads from Supabase
 
   // Tools (top 3)
   const tc = document.getElementById('home-tools-container');
@@ -1350,64 +1350,39 @@ function renderMomentum(tools) {
 }
 
 // ── OPPORTUNITY FEED ──
-function renderOpportunityFeed(tools) {
+async function renderOpportunityFeed(tools) {
   const c = document.getElementById('opportunity-container');
   if (!c) return;
-
-  // rage 높은 툴 = 기회
-  const opportunities = [
-    {
-      pain: 'Vercel pricing is confusing and expensive',
-      signal: '↑ Rage 5.8 · 200+ Reddit posts this week',
-      opportunity: 'Simple Vercel cost estimator / alternative comparison tool',
-      potential: 'HIGH',
-      tags: ['hosting', 'pricing']
-    },
-    {
-      pain: 'PlanetScale removed free tier — devs need alternative',
-      signal: '↑ Rage 8.2 · 400+ mentions across HN + Reddit',
-      opportunity: 'MySQL-compatible DB with generous free tier',
-      potential: 'HIGH',
-      tags: ['database', 'free-tier']
-    },
-    {
-      pain: 'Supabase Auth is confusing for beginners',
-      signal: '↑ 18 Reddit threads asking same questions this week',
-      opportunity: 'Supabase auth debugger / visual RLS editor',
-      potential: 'MEDIUM',
-      tags: ['auth', 'devtools']
+  try {
+    const { data } = await sb.from('opportunities').select('*').order('collected_at', { ascending: false }).limit(5);
+    if (data && data.length > 0) {
+      c.innerHTML = data.map(o => `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+            <div style="font-size:.85rem;font-weight:700;line-height:1.3;color:var(--text)">😤 "${o.pain}"</div>
+            <span style="background:${o.potential==='HIGH'?'rgba(34,197,94,.1)':'rgba(245,158,11,.1)'};color:${o.potential==='HIGH'?'var(--up)':'var(--warn)'};padding:2px 8px;border-radius:4px;font-size:.62rem;font-family:JetBrains Mono,monospace;flex-shrink:0">${o.potential}</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">${o.signal||''}</div>
+          <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">
+            💡 Opportunity: ${o.opportunity}
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            ${(o.tags||[]).map(tag => `<span style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:2px 7px;border-radius:3px;font-size:.62rem;font-family:JetBrains Mono,monospace">#${tag}</span>`).join('')}
+            <button onclick="shareOpportunityWithOG('${(o.pain||'').replace(/'/g,\"\\'\")}','${(o.opportunity||'').replace(/'/g,\"\\'\")}')"><span style="background:none;border:none;color:var(--muted);font-size:.68rem;cursor:pointer">↗ share</span></button>
+          </div>
+        </div>`).join('');
+    } else {
+      const rageTools = tools.filter(t => t.rage >= 5).sort((a,b) => b.rage - a.rage).slice(0,3);
+      if (rageTools.length > 0) {
+        c.innerHTML = '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:var(--muted);margin-bottom:10px">Based on community rage scores · Full analysis collected daily at 7AM KST</div>' +
+          rageTools.map(t => `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:.85rem;font-weight:700;margin-bottom:6px;color:var(--text)">😤 "${t.name} frustration is growing"</div><div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">↑ Rage ${t.rage}/10 · ${t.rage_note||'Community complaints rising'}</div><div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">💡 Opportunity: Better alternative or wrapper for ${t.name}</div></div>`).join('');
+      } else {
+        c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Opportunity analysis collected daily. Check back tomorrow!</div>';
+      }
     }
-  ];
-
-  // 실제 rage 높은 툴도 추가
-  const rageTools = tools.filter(t => t.rage >= 5).sort((a, b) => b.rage - a.rage);
-  if (rageTools[0] && !opportunities.find(o => o.pain.toLowerCase().includes(rageTools[0].name.toLowerCase()))) {
-    opportunities.push({
-      pain: `${rageTools[0].name} frustration is growing`,
-      signal: `↑ Rage score ${rageTools[0].rage}/10 · Community complaints rising`,
-      opportunity: `Better alternative or wrapper for ${rageTools[0].name}`,
-      potential: 'MEDIUM',
-      tags: [rageTools[0].category || 'devtools']
-    });
+  } catch(e) {
+    c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Could not load opportunities.</div>';
   }
-
-  c.innerHTML = opportunities.map(o => `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
-        <div style="font-size:.85rem;font-weight:700;line-height:1.3;color:var(--text)">😤 "${o.pain}"</div>
-        <span style="background:${o.potential==='HIGH'?'rgba(34,197,94,.1)':'rgba(245,158,11,.1)'};color:${o.potential==='HIGH'?'var(--up)':'var(--warn)'};padding:2px 8px;border-radius:4px;font-size:.62rem;font-family:JetBrains Mono,monospace;flex-shrink:0">${o.potential}</span>
-      </div>
-      <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">${o.signal}</div>
-      <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">
-        💡 Opportunity: ${o.opportunity}
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        ${o.tags.map(tag => `<span style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:2px 7px;border-radius:3px;font-size:.62rem;font-family:JetBrains Mono,monospace">#${tag}</span>`).join('')}
-        <button onclick="shareOpportunity('${o.pain.replace(/'/g,"\\'")}','${o.opportunity.replace(/'/g,"\\'")}')">
-          <span style="background:none;border:none;color:var(--muted);font-size:.68rem;cursor:pointer;padding:2px 6px">↗ share</span>
-        </button>
-      </div>
-    </div>`).join('');
 }
 
 function shareOpportunity(pain, opportunity) {
