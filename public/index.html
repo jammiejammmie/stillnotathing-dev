@@ -417,7 +417,15 @@ footer a{color:var(--accent);text-decoration:none}
   </div>
 </div>
 
+
+
+<!-- Giscus Comments (shown on guides) -->
+
+
+
+
 <script>
+
 const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -802,7 +810,11 @@ function renderGuideCard(g) {
 
 // ── HOME PAGE ──
 async function loadHome() {
-  const [stories, tools, guides] = await Promise.all([loadHN(5), loadTools(), loadGuides(1)]);
+  const [stories, tools, guides] = await Promise.all([
+    loadHN(5).catch(() => []),
+    loadTools().catch(() => defaultTools),
+    loadGuides(1).catch(() => [])
+  ]);
 
   // Guide
   const gc = document.getElementById('home-guide-container');
@@ -972,10 +984,9 @@ async function init() {
 }
 
 init();
-</script>
 
-<!-- Giscus Comments (shown on guides) -->
-<script>
+
+
 window.initGiscus = function() {
   const el = document.getElementById('giscus-container');
   if (!el) return;
@@ -996,9 +1007,9 @@ window.initGiscus = function() {
   script.async = true;
   el.appendChild(script);
 };
-</script>
 
-<script>
+
+
 // ── DYNAMIC OG TAGS ──
 function updateOGTags(title, description, imageType, imageParams) {
   const base = 'https://stillnotathing.com';
@@ -1085,313 +1096,7 @@ function shareOpportunityWithOG(pain, opportunity) {
     `&title=${encodedTitle}`
   );
 }
-</script>
 
+</script>
 </body>
 </html>
-<script>
-// HN 공유 링크 처리
-function shareHN(id, title, origUrl) {
-  const shareUrl = 'https://stillnotathing.com/?hn=' + id;
-  if (navigator.share) {
-    navigator.share({ title, url: shareUrl });
-  } else {
-    navigator.clipboard.writeText(shareUrl);
-    toast('Link copied! ✓');
-  }
-}
-
-async function loadHNStoryPage(storyId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const home = document.getElementById('page-home');
-  home.classList.add('active');
-  home.innerHTML = '<div class="loading">Loading story...</div>';
-  try {
-    const res = await fetch('https://hacker-news.firebaseio.com/v0/item/' + storyId + '.json');
-    const s = await res.json();
-    const url = s.url || 'https://news.ycombinator.com/item?id=' + s.id;
-    const allStories = await loadHN(5);
-    home.innerHTML = '<div style="padding:20px">' +
-      '<button class="btn-icon" onclick="loadHome()" style="margin-bottom:16px">← Back</button>' +
-      '<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">📰 Curated from Hacker News</div>' +
-      '<div style="font-size:1.1rem;font-weight:700;line-height:1.3;margin-bottom:10px">' + s.title + '</div>' +
-      '<div style="display:flex;gap:12px;font-family:JetBrains Mono,monospace;font-size:.72rem;color:var(--muted);margin-bottom:14px"><span>⬆ ' + s.score + ' pts</span><span>💬 ' + (s.descendants||0) + ' comments</span></div>' +
-      '<div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--muted);font-style:italic">Curated by StillNotAThing — daily dev resources for indie hackers.</div>' +
-      '<div style="display:flex;gap:10px;margin-bottom:24px">' +
-      '<a href="' + url + '" target="_blank" style="flex:1;background:var(--accent);color:#000;padding:10px;border-radius:8px;text-align:center;font-weight:700;font-size:.85rem;text-decoration:none">Read Original →</a>' +
-      '<a href="https://news.ycombinator.com/item?id=' + s.id + '" target="_blank" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:10px 14px;border-radius:8px;font-size:.82rem;text-decoration:none">HN Comments</a>' +
-      '</div>' +
-      '<div style="border-top:1px solid var(--border);padding-top:20px">' +
-      '<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">📰 More from today</div>' +
-      allStories.filter(st=>st.id!==s.id).map((st,i)=>renderHNItem(st,i)).join('') +
-      '</div></div>';
-  } catch(e) { loadHome(); }
-}
-
-// URL 파라미터 체크 (공유 링크로 들어왔을 때)
-const urlParams = new URLSearchParams(window.location.search);
-const hnId = urlParams.get('hn');
-if (hnId) {
-  window.addEventListener('load', () => loadHNStoryPage(parseInt(hnId)));
-}
-</script>
-<script>
-// ── GUIDE DETAIL PAGE ──
-async function openGuide(guideId) {
-  // 전체 guides에서 해당 글 찾기
-  const { data } = await sb.from('guides').select('*').eq('id', guideId).single();
-  if (!data) return;
-
-  // 관련 글 가져오기 (같은 카테고리)
-  const { data: related } = await sb.from('guides')
-    .select('id,title,description,category,read_time')
-    .eq('category', data.category)
-    .neq('id', guideId)
-    .order('created_at', { ascending: false })
-    .limit(3);
-
-  // 관련 툴 찾기
-  const toolMap = {
-    'hosting': ['Vercel','Netlify','Railway'],
-    'database': ['Supabase','PlanetScale'],
-    'payments': ['Stripe'],
-    'auth': ['Clerk'],
-    'email': ['Resend'],
-    'devtools': ['GitHub','Netlify','Vercel']
-  };
-  const relatedTools = toolMap[data.category] || [];
-
-  // 상세 페이지 렌더링
-  const overlay = document.createElement('div');
-  overlay.id = 'guide-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:150;overflow-y:auto;';
-
-  // 마크다운 → HTML 간단 변환
-  function md2html(md) {
-    if (!md) return '';
-    return md
-      .replace(/^### (.*)/gm, '<h3 style="font-size:1rem;font-weight:700;margin:18px 0 8px;color:var(--text)">$1</h3>')
-      .replace(/^## (.*)/gm, '<h2 style="font-size:1.1rem;font-weight:700;margin:20px 0 10px;color:var(--text)">$1</h2>')
-      .replace(/^# (.*)/gm, '<h1 style="font-size:1.2rem;font-weight:700;margin:20px 0 10px;color:var(--text)">$1</h1>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/`([^`\n]+)`/g, '<code style="background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-family:JetBrains Mono,monospace;font-size:.82em;color:var(--accent)">$1</code>')
-      .replace(/```[\w]*\n([\s\S]*?)```/g, '<pre style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;margin:12px 0"><code style="font-family:JetBrains Mono,monospace;font-size:.78rem;color:var(--text);white-space:pre">$1</code></pre>')
-      .replace(/^- (.*)/gm, '<li style="padding:3px 0;color:var(--muted);font-size:.85rem">$1</li>')
-      .replace(/(<li.*<\/li>)/gs, '<ul style="list-style:none;padding-left:12px;margin:8px 0">$1</ul>')
-      .replace(/\n\n/g, '</p><p style="margin-bottom:12px;font-size:.88rem;line-height:1.7;color:var(--muted)">')
-      .replace(/^(.)/m, '<p style="margin-bottom:12px;font-size:.88rem;line-height:1.7;color:var(--muted)">$1');
-  }
-
-  overlay.innerHTML = `
-    <div style="max-width:700px;margin:0 auto;padding:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-        <button onclick="closeGuide()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">← Back</button>
-        <div style="display:flex;gap:8px">
-          <button class="btn-icon ${userBookmarks.has('guide_'+data.id)?'bookmarked':''}" onclick="toggleBookmark('guide_${data.id}','${(data.title||'').replace(/'/g,"\\'")}')">🔖</button>
-          <button class="btn-icon" onclick="shareGuide('${data.id}','${(data.title||'').replace(/'/g,"\\'")}')">↗ share</button>
-        </div>
-      </div>
-
-      <div style="margin-bottom:20px">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <span style="background:rgba(0,212,170,.1);color:var(--accent);padding:2px 8px;border-radius:3px;font-size:.65rem;font-weight:700;text-transform:uppercase;font-family:JetBrains Mono,monospace">${data.category||'guide'}</span>
-          <span style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted)">${data.read_time||'5 min read'}</span>
-        </div>
-        <h1 style="font-size:1.4rem;font-weight:700;letter-spacing:-.5px;line-height:1.3;margin-bottom:10px;color:var(--text)">${data.title}</h1>
-        <p style="font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:16px">${data.description||''}</p>
-        ${data.tags ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${data.tags.map(t=>`<span style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:2px 8px;border-radius:4px;font-size:.68rem;font-family:JetBrains Mono,monospace">#${t}</span>`).join('')}</div>` : ''}
-      </div>
-
-      <div style="border-top:1px solid var(--border);padding-top:20px;margin-bottom:28px;line-height:1.7">
-        ${md2html(data.content || '내용을 불러오는 중...')}
-      </div>
-
-      ${relatedTools.length > 0 ? `
-      <div style="background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:10px;padding:14px;margin-bottom:20px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px">📊 Related Tool Scores</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${relatedTools.map(t => `<button onclick="closeGuide();showPage('tools')" style="background:var(--surface);border:1px solid var(--border);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:.75rem;cursor:pointer;font-family:DM Sans,sans-serif">${t} →</button>`).join('')}
-        </div>
-        <div style="margin-top:8px;font-size:.72rem;color:var(--muted)">See community happiness scores for these tools</div>
-      </div>` : ''}
-
-      ${related && related.length > 0 ? `
-      <div style="margin-bottom:24px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">📖 Related Guides</div>
-        ${related.map(r => `
-          <div onclick="closeGuide();setTimeout(()=>openGuide('${r.id}'),100)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer">
-            <div style="font-size:.82rem;font-weight:600;margin-bottom:3px;color:var(--text)">${r.title}</div>
-            <div style="font-size:.72rem;color:var(--muted)">${r.description||''}</div>
-            <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:var(--muted);margin-top:4px">${r.read_time||'5 min'} read →</div>
-          </div>`).join('')}
-      </div>` : ''}
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:24px">
-        <div style="font-size:.82rem;font-weight:600;margin-bottom:6px">💰 How much does your stack cost?</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Calculate your exact monthly SaaS costs — free tool</div>
-        <a href="/calc.html" style="background:var(--accent);color:#000;padding:7px 14px;border-radius:6px;font-size:.75rem;font-weight:700;text-decoration:none;display:inline-block">Try Stack Calculator →</a>
-      </div>
-
-      <div style="text-align:center;padding:16px;border-top:1px solid var(--border)">
-        <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Found this helpful? Share it 👇</div>
-        <button onclick="shareGuide('${data.id}','${(data.title||'').replace(/'/g,"\\'")}')">
-          <span style="background:var(--accent);color:#000;padding:8px 20px;border-radius:7px;font-size:.8rem;font-weight:700;cursor:pointer">↗ Share this guide</span>
-        </button>
-      </div>
-    </div>`;
-
-  document.body.appendChild(overlay);
-  window.scrollTo(0, 0);
-  markRead('guide_' + guideId);
-
-  // URL 업데이트 (SEO + 공유)
-  history.pushState({}, '', '/?guide=' + guideId);
-}
-
-function closeGuide() {
-  const overlay = document.getElementById('guide-overlay');
-  if (overlay) overlay.remove();
-  history.pushState({}, '', '/');
-}
-
-function shareGuide(id, title) {
-  const url = `https://stillnotathing.com/?guide=${id}`;
-  if (navigator.share) {
-    navigator.share({ title, url });
-  } else {
-    navigator.clipboard.writeText(url);
-    toast('Link copied! ✓');
-  }
-}
-
-// URL에서 guide/hn ID 체크
-const _urlParams = new URLSearchParams(window.location.search);
-const _guideParam = _urlParams.get('guide');
-const _hnParam = _urlParams.get('hn');
-
-if (_guideParam) {
-  // 페이지 로드 + Supabase 초기화 후 열기
-  const _openWhenReady = setInterval(function() {
-    if (typeof openGuide === 'function' && typeof sb !== 'undefined') {
-      clearInterval(_openWhenReady);
-      setTimeout(function() { openGuide(_guideParam); }, 300);
-    }
-  }, 100);
-}
-
-if (_hnParam) {
-  const _openHNWhenReady = setInterval(function() {
-    if (typeof loadHNStoryPage === 'function') {
-      clearInterval(_openHNWhenReady);
-      setTimeout(function() { loadHNStoryPage(parseInt(_hnParam)); }, 300);
-    }
-  }, 100);
-}
-</script>
-<script>
-// ── PAIN RADAR ──
-function renderPainRadar(tools) {
-  const c = document.getElementById('pain-radar-container');
-  if (!c) return;
-  const sorted = [...tools].sort((a, b) => b.rage - a.rage).slice(0, 5);
-  c.innerHTML = sorted.map((t, i) => {
-    const rageColor = t.rage >= 7 ? 'var(--down)' : t.rage >= 5 ? 'var(--warn)' : 'var(--muted)';
-    const rageEmoji = t.rage >= 7 ? '🚨' : t.rage >= 5 ? '⚠️' : '😤';
-    return `
-      <div onclick="showPage('tools')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);width:16px">#${i+1}</div>
-        <div style="font-size:.9rem">${t.emoji||'🔧'}</div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:.85rem">${t.name}</div>
-          ${t.rage_note ? `<div style="font-size:.72rem;color:${rageColor};margin-top:2px">${rageEmoji} ${t.rage_note}</div>` : ''}
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:JetBrains Mono,monospace;font-size:1.1rem;font-weight:700;color:${rageColor}">${t.rage}</div>
-          <div style="font-size:.6rem;color:var(--muted)">rage</div>
-        </div>
-        <div style="width:50px">
-          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-            <div style="height:100%;width:${t.rage*10}%;background:${rageColor};border-radius:2px"></div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ── TOOL MOMENTUM ──
-function renderMomentum(tools) {
-  const c = document.getElementById('momentum-container');
-  if (!c) return;
-  const rising = tools.filter(t => t.trend === 'up').slice(0, 3);
-  const falling = tools.filter(t => t.trend === 'down').slice(0, 2);
-
-  c.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:12px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--up);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">↑ Rising Fast</div>
-        ${rising.map(t => `
-          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(34,197,94,.08)">
-            <span>${t.emoji||'🔧'}</span>
-            <span style="font-size:.82rem;font-weight:600;flex:1">${t.name}</span>
-            <span style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:var(--up)">${t.happiness}/10</span>
-          </div>`).join('')}
-      </div>
-      <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:12px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--down);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">↓ Losing Ground</div>
-        ${falling.map(t => `
-          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(239,68,68,.08)">
-            <span>${t.emoji||'🔧'}</span>
-            <span style="font-size:.82rem;font-weight:600;flex:1">${t.name}</span>
-            <span style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:var(--down)">${t.happiness}/10</span>
-          </div>`).join('')}
-        ${falling.length === 0 ? '<div style="font-size:.75rem;color:var(--muted)">All tools stable</div>' : ''}
-      </div>
-    </div>`;
-}
-
-// ── OPPORTUNITY FEED ──
-async function renderOpportunityFeed(tools) {
-  const c = document.getElementById('opportunity-container');
-  if (!c) return;
-  try {
-    const { data } = await sb.from('opportunities').select('*').order('collected_at', { ascending: false }).limit(5);
-    if (data && data.length > 0) {
-      c.innerHTML = data.map(o => `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
-            <div style="font-size:.85rem;font-weight:700;line-height:1.3;color:var(--text)">😤 "${o.pain}"</div>
-            <span style="background:${o.potential==='HIGH'?'rgba(34,197,94,.1)':'rgba(245,158,11,.1)'};color:${o.potential==='HIGH'?'var(--up)':'var(--warn)'};padding:2px 8px;border-radius:4px;font-size:.62rem;font-family:JetBrains Mono,monospace;flex-shrink:0">${o.potential}</span>
-          </div>
-          <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">${o.signal||''}</div>
-          <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">
-            💡 Opportunity: ${o.opportunity}
-          </div>
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-            ${(o.tags||[]).map(tag => `<span style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:2px 7px;border-radius:3px;font-size:.62rem;font-family:JetBrains Mono,monospace">#${tag}</span>`).join('')}
-            <button onclick="shareOpportunityWithOG('${(o.pain||'').replace(/'/g,\"\\'\")}','${(o.opportunity||'').replace(/'/g,\"\\'\")}')"><span style="background:none;border:none;color:var(--muted);font-size:.68rem;cursor:pointer">↗ share</span></button>
-          </div>
-        </div>`).join('');
-    } else {
-      const rageTools = tools.filter(t => t.rage >= 5).sort((a,b) => b.rage - a.rage).slice(0,3);
-      if (rageTools.length > 0) {
-        c.innerHTML = '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:var(--muted);margin-bottom:10px">Based on community rage scores · Full analysis collected daily at 7AM KST</div>' +
-          rageTools.map(t => `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:.85rem;font-weight:700;margin-bottom:6px;color:var(--text)">😤 "${t.name} frustration is growing"</div><div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">↑ Rage ${t.rage}/10 · ${t.rage_note||'Community complaints rising'}</div><div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">💡 Opportunity: Better alternative or wrapper for ${t.name}</div></div>`).join('');
-      } else {
-        c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Opportunity analysis collected daily. Check back tomorrow!</div>';
-      }
-    }
-  } catch(e) {
-    c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Could not load opportunities.</div>';
-  }
-}
-
-function shareOpportunity(pain, opportunity) {
-  const text = `Pain: "${pain}"\n\n💡 Opportunity: ${opportunity}\n\nvia stillnotathing.com`;
-  if (navigator.share) {
-    navigator.share({ title: 'Developer Opportunity', text, url: 'https://stillnotathing.com' });
-  } else {
-    navigator.clipboard.writeText(text + '\n\nhttps://stillnotathing.com');
-    toast('Opportunity copied! Share it 🚀');
-  }
-}
-</script>
