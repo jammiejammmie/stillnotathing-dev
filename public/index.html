@@ -48,7 +48,7 @@ header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1p
 @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
 .hero-sub{color:var(--muted);font-size:.88rem;margin-bottom:20px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s}.stat-card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .stat-num{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1;margin-bottom:3px}
 .stat-label{font-size:.65rem;color:var(--muted)}
 
@@ -235,10 +235,10 @@ footer a{color:var(--accent);text-decoration:none}
   <h1 class="hero-title">What's shipping today<span class="cursor"></span></h1>
   <p class="hero-sub">See what indie hackers are using, loving, and raging about today.</p>
   <div class="stats">
-    <div class="stat-card"><div class="stat-num" id="stat-tools">—</div><div class="stat-label">tools indexed</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-guides">—</div><div class="stat-label">guides</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-hn">10</div><div class="stat-label">hn stories</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-happiness">—</div><div class="stat-label">avg happiness</div></div>
+    <div class="stat-card" onclick="showPage('tools')"><div class="stat-num" id="stat-tools">—</div><div class="stat-label">tools indexed →</div></div>
+    <div class="stat-card" onclick="showPage('guides')"><div class="stat-num" id="stat-guides">—</div><div class="stat-label">guides →</div></div>
+    <div class="stat-card" onclick="showPage('hn')"><div class="stat-num" id="stat-hn">10</div><div class="stat-label">hn stories →</div></div>
+    <div class="stat-card" onclick="showPage('tools')"><div class="stat-num" id="stat-happiness">—</div><div class="stat-label">avg happiness →</div></div>
   </div>
 </div>
 
