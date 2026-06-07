@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public Roadmap — StillNotAThing</title>
+<meta name="description" content="Vote on what we build next. Public roadmap for StillNotAThing — the daily morning page for indie hackers.">
+<meta property="og:title" content="Public Roadmap — StillNotAThing">
+<meta property="og:url" content="https://stillnotathing.com/roadmap">
+<link rel="canonical" href="https://stillnotathing.com/roadmap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#111118;--card:#13131f;--border:#1e1e2e;--text:#e8e8f0;--muted:#6b6b80;--accent:#00d4aa;--accent2:#7c5cfc;--up:#22c55e;--down:#ef4444;--warn:#f59e0b}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--accent);text-decoration:none}
+.back{font-size:.78rem;color:var(--muted);text-decoration:none}
+.page-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px}
+.page-tab{padding:12px 20px;font-size:.82rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.page-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.main{padding:20px;max-width:700px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.hero{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.hero-title{font-size:1.5rem;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px}
+.hero-sub{color:var(--muted);font-size:.85rem}
+.roadmap-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+.vote-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
+.vote-btn{background:var(--surface);border:1px solid var(--border);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:.9rem}
+.vote-btn:hover,.vote-btn.voted{background:rgba(0,212,170,.1);border-color:var(--accent)}
+.vote-count{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:var(--accent)}
+.item-content{flex:1}
+.item-title{font-size:.88rem;font-weight:600;margin-bottom:4px;line-height:1.3}
+.item-desc{font-size:.75rem;color:var(--muted);line-height:1.4;margin-bottom:8px}
+.item-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.status-badge{font-size:.62rem;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.status-planned{background:rgba(107,107,128,.1);color:var(--muted)}
+.status-in-progress{background:rgba(245,158,11,.1);color:var(--warn)}
+.status-done{background:rgba(34,197,94,.1);color:var(--up)}
+.status-considering{background:rgba(124,92,252,.1);color:var(--accent2)}
+.share-btn{background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;padding:2px 6px;border-radius:4px;transition:all .15s}
+.share-btn:hover{color:var(--accent)}
+.feedback-form{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px;font-family:'JetBrains Mono',monospace;text-transform:uppercase}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none}
+.form-input:focus{border-color:var(--accent)}
+.form-select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none}
+.form-textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;min-height:70px;resize:vertical}
+.btn-submit{background:var(--accent);border:none;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%}
+.changelog-item{border-left:2px solid var(--border);padding-left:16px;margin-bottom:24px;position:relative}
+.changelog-item::before{content:'';position:absolute;left:-5px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--border)}
+.changelog-item.major::before{background:var(--accent)}
+.changelog-item.minor::before{background:var(--accent2)}
+.changelog-item.fix::before{background:var(--warn)}
+.changelog-date{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);margin-bottom:6px}
+.changelog-version{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent);margin-bottom:4px}
+.changelog-title{font-size:.9rem;font-weight:700;margin-bottom:6px}
+.changelog-items{list-style:none}
+.changelog-items li{font-size:.8rem;color:var(--muted);padding:3px 0;display:flex;gap:6px}
+.changelog-items li::before{content:'→';color:var(--accent);flex-shrink:0}
+.type-badge{font-size:.6rem;padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace}
+.type-new{background:rgba(34,197,94,.1);color:var(--up)}
+.type-improved{background:rgba(0,212,170,.1);color:var(--accent)}
+.type-fixed{background:rgba(245,158,11,.1);color:var(--warn)}
+.gh-link{display:inline-flex;align-items:center;gap:6px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:8px 14px;border-radius:8px;text-decoration:none;font-size:.78rem;font-weight:500;margin-top:12px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:8px;font-size:.8rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">⚡ StillNotAThing</a>
+  <a href="/" class="back">← Home</a>
+</header>
+
+<div class="page-tabs">
+  <div class="page-tab active" onclick="switchPage('roadmap')">🗺️ Roadmap</div>
+  <div class="page-tab" onclick="switchPage('feedback')">💬 Request</div>
+  <div class="page-tab" onclick="switchPage('changelog')">📋 Changelog</div>
+</div>
+
+<div class="main">
+
+  <!-- ROADMAP -->
+  <div class="page active" id="page-roadmap">
+    <div class="hero">
+      <h1 class="hero-title">Public Roadmap</h1>
+      <p class="hero-sub">Vote on what we build next. Most votes ship first.</p>
+    </div>
+
+    <div id="roadmap-items">
+      <!-- In Progress -->
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn voted" onclick="vote(this)">▲</div>
+          <div class="vote-count" id="votes-1">47</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">DevDash — Netlify + Supabase + GitHub unified dashboard</div>
+          <div class="item-desc">Stop switching between 5 tabs. See all your project statuses in one place.</div>
+          <div class="item-meta">
+            <span class="status-badge status-in-progress">🔨 In Progress</span>
+            <button class="share-btn" onclick="shareItem('DevDash unified dashboard')">↗ share</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" onclick="vote(this)">▲</div>
+          <div class="vote-count" id="votes-2">38</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Chrome Extension — StillNotAThing as your new tab</div>
+          <div class="item-desc">Open a new tab and your daily indie hacker briefing is already there.</div>
+          <div class="item-meta">
+            <span class="status-badge status-planned">📋 Planned</span>
+            <button class="share-btn" onclick="shareItem('Chrome Extension new tab')">↗ share</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" onclick="vote(this)">▲</div>
+          <div class="vote-count" id="votes-3">31</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">AI Cost Calculator — How much does Claude/GPT cost for your app?</div>
+          <div class="item-desc">Input your expected usage, get exact monthly API costs. Never get a surprise bill again.</div>
+          <div class="item-meta">
+            <span class="status-badge status-planned">📋 Planned</span>
+            <button class="share-btn" onclick="shareItem('AI Cost Calculator')">↗ share</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" onclick="vote(this)">▲</div>
+          <div class="vote-count" id="votes-4">28</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Indie Hacker Job Board — small team / solo project collaborators</div>
+          <div class="item-desc">HN Jobs but for indie hackers. "Looking for co-founder / designer / marketer"</div>
+          <div class="item-meta">
+            <span class="status-badge status-considering">🤔 Considering</span>
+            <button class="share-btn" onclick="shareItem('Indie Hacker Job Board')">↗ share</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" onclick="vote(this)">▲</div>
+          <div class="vote-count" id="votes-5">22</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Weekly Leaderboard — most active indie hackers on StillNotAThing</div>
+          <div class="item-desc">Streak rankings, most articles read, most tools reviewed. Social proof for builders.</div>
+          <div class="item-meta">
+            <span class="status-badge status-considering">🤔 Considering</span>
+            <button class="share-btn" onclick="shareItem('Weekly Leaderboard')">↗ share</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" onclick="vote(this)">▲</div>
+          <div class="vote-count" id="votes-6">19</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Tool Alternatives Finder — "What can I use instead of X?"</div>
+          <div class="item-desc">PlanetScale killed their free tier? Find alternatives with similar happiness scores.</div>
+          <div class="item-meta">
+            <span class="status-badge status-considering">🤔 Considering</span>
+            <button class="share-btn" onclick="shareItem('Tool Alternatives Finder')">↗ share</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed -->
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" style="opacity:.4;cursor:default">✓</div>
+          <div class="vote-count" style="color:var(--up)">✓</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">GitHub Login + Streaks + Bookmarks</div>
+          <div class="item-desc">Sign in, track your reading streak, save articles for later.</div>
+          <div class="item-meta">
+            <span class="status-badge status-done">✅ Shipped</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="vote-col">
+          <div class="vote-btn" style="opacity:.4;cursor:default">✓</div>
+          <div class="vote-count" style="color:var(--up)">✓</div>
+        </div>
+        <div class="item-content">
+          <div class="item-title">HN Curated Feed with Share Links</div>
+          <div class="item-desc">Share HN stories via stillnotathing.com links with context page.</div>
+          <div class="item-meta">
+            <span class="status-badge status-done">✅ Shipped</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a href="https://github.com/jammiejammmie/stillnotathing-dev/discussions" target="_blank" class="gh-link">
+      💬 Suggest a feature on GitHub Discussions →
+    </a>
+  </div>
+
+  <!-- FEEDBACK FORM -->
+  <div class="page" id="page-feedback">
+    <div class="hero">
+      <h1 class="hero-title">Request a Feature</h1>
+      <p class="hero-sub">Tell us what you need. High-voted requests ship first.</p>
+    </div>
+
+    <div class="feedback-form">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="req-type">
+          <option value="feature">🚀 New Feature</option>
+          <option value="tool">🔧 Add a Tool</option>
+          <option value="content">📖 Content Request</option>
+          <option value="bug">🐛 Bug Report</option>
+          <option value="other">💬 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="req-title" placeholder="e.g. Add Prisma to the tool index">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" id="req-desc" placeholder="Why would this be useful? What problem does it solve?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your email (optional)</label>
+        <input class="form-input" id="req-email" type="email" placeholder="Get notified when it ships">
+      </div>
+      <button class="btn-submit" onclick="submitRequest()">Submit Request →</button>
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <a href="https://github.com/jammiejammmie/stillnotathing-dev/discussions" target="_blank" class="gh-link">
+        Or discuss on GitHub →
+      </a>
+    </div>
+  </div>
+
+  <!-- CHANGELOG -->
+  <div class="page" id="page-changelog">
+    <div class="hero">
+      <h1 class="hero-title">Changelog</h1>
+      <p class="hero-sub">What's been built. Updated as we ship.</p>
+    </div>
+
+    <div class="changelog-item major">
+      <div class="changelog-date">June 7, 2026</div>
+      <div class="changelog-version">v0.5 — Big Launch</div>
+      <div class="changelog-title">GitHub Login, Streaks, Badges & Admin</div>
+      <ul class="changelog-items">
+        <li><span class="type-badge type-new">NEW</span> GitHub OAuth login</li>
+        <li><span class="type-badge type-new">NEW</span> Daily reading streaks with 7/30-day milestones</li>
+        <li><span class="type-badge type-new">NEW</span> Article bookmarks</li>
+        <li><span class="type-badge type-new">NEW</span> HN share → stillnotathing.com link with context page</li>
+        <li><span class="type-badge type-new">NEW</span> Stack cost calculator</li>
+        <li><span class="type-badge type-new">NEW</span> Badge generator for GitHub READMEs</li>
+        <li><span class="type-badge type-new">NEW</span> Admin panel with pipeline controls</li>
+        <li><span class="type-badge type-new">NEW</span> Automated article generation pipeline</li>
+        <li><span class="type-badge type-new">NEW</span> Tool submission form</li>
+      </ul>
+    </div>
+
+    <div class="changelog-item minor">
+      <div class="changelog-date">June 6, 2026</div>
+      <div class="changelog-version">v0.4</div>
+      <div class="changelog-title">Tool Scorecards + Supabase Integration</div>
+      <ul class="changelog-items">
+        <li><span class="type-badge type-new">NEW</span> DX / Price / Rage / Happiness scores</li>
+        <li><span class="type-badge type-new">NEW</span> Community voting (Love it / Hate it)</li>
+        <li><span class="type-badge type-new">NEW</span> Trend indicators (Rising / Falling / Stable)</li>
+        <li><span class="type-badge type-improved">IMPROVED</span> Supabase live data connection</li>
+      </ul>
+    </div>
+
+    <div class="changelog-item fix">
+      <div class="changelog-date">June 6, 2026</div>
+      <div class="changelog-version">v0.3</div>
+      <div class="changelog-title">HN Curation + Live Ticker</div>
+      <ul class="changelog-items">
+        <li><span class="type-badge type-new">NEW</span> Real-time Hacker News top 10</li>
+        <li><span class="type-badge type-new">NEW</span> Live ticker with tool status updates</li>
+        <li><span class="type-badge type-new">NEW</span> Share buttons on all content</li>
+        <li><span class="type-badge type-improved">IMPROVED</span> Mobile responsive layout</li>
+      </ul>
+    </div>
+
+    <div class="changelog-item">
+      <div class="changelog-date">June 5, 2026</div>
+      <div class="changelog-version">v0.1 — Launch</div>
+      <div class="changelog-title">Initial Launch</div>
+      <ul class="changelog-items">
+        <li><span class="type-badge type-new">NEW</span> stillnotathing.com goes live</li>
+        <li><span class="type-badge type-new">NEW</span> Morning briefing hero</li>
+        <li><span class="type-badge type-new">NEW</span> Basic tool index</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function switchPage(page) {
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('page-' + page).classList.add('active');
+}
+
+function vote(btn) {
+  btn.classList.toggle('voted');
+  const countEl = btn.closest('.vote-col').querySelector('.vote-count');
+  const current = parseInt(countEl.textContent);
+  countEl.textContent = btn.classList.contains('voted') ? current + 1 : current - 1;
+  if (btn.classList.contains('voted')) showToast('Vote recorded! 🎉');
+}
+
+function shareItem(title) {
+  const url = `https://stillnotathing.com/roadmap`;
+  if (navigator.share) {
+    navigator.share({ title: `Vote: ${title} — StillNotAThing Roadmap`, url });
+  } else {
+    navigator.clipboard.writeText(url);
+    showToast('Roadmap link copied! ✓');
+  }
+}
+
+async function submitRequest() {
+  const type = document.getElementById('req-type').value;
+  const title = document.getElementById('req-title').value.trim();
+  const desc = document.getElementById('req-desc').value.trim();
+  const email = document.getElementById('req-email').value.trim();
+
+  if (!title) { showToast('Please enter a title'); return; }
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/tool_submissions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name: title, description: `[${type}] ${desc}`, submitted_by: email || 'anonymous', category: type })
+    });
+  } catch(e) {}
+
+  showToast('Request submitted! 🎉 We\'ll review it soon.');
+  document.getElementById('req-title').value = '';
+  document.getElementById('req-desc').value = '';
+  document.getElementById('req-email').value = '';
+}
+
+// Load page from URL hash
+const hash = window.location.hash.replace('#', '');
+if (['feedback', 'changelog'].includes(hash)) {
+  document.querySelectorAll('.page-tab')[hash === 'feedback' ? 1 : 2].click();
+}
+</script>
+</body>
+</html>

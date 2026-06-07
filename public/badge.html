@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Stack Badge Generator — StillNotAThing</title>
+<meta name="description" content="Generate badges for your GitHub README showing your stack happiness scores. Free forever.">
+<meta property="og:title" content="Dev Stack Badge Generator — StillNotAThing">
+<meta property="og:url" content="https://stillnotathing.com/badge">
+<link rel="canonical" href="https://stillnotathing.com/badge">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#111118;--card:#13131f;--border:#1e1e2e;--text:#e8e8f0;--muted:#6b6b80;--accent:#00d4aa;--accent2:#7c5cfc;--up:#22c55e;--down:#ef4444}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--accent);text-decoration:none}
+.back{font-size:.78rem;color:var(--muted);text-decoration:none}
+.main{padding:20px;max-width:700px;margin:0 auto}
+.hero{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px;text-align:center}
+.hero-title{font-size:1.8rem;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+.hero-sub{color:var(--muted);font-size:.88rem;margin-bottom:12px}
+.hero-why{background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:8px;padding:12px;font-size:.78rem;color:var(--muted);text-align:left}
+.hero-why strong{color:var(--accent)}
+.section{margin-bottom:28px}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:14px}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.tool-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s;text-align:left}
+.tool-btn:hover{border-color:var(--accent)}
+.tool-btn.selected{background:rgba(0,212,170,.06);border-color:var(--accent)}
+.tool-btn-name{font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.tool-btn-score{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent);margin-top:3px}
+.badge-preview{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.badge-preview-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.badge-preview-area{background:var(--bg);border-radius:8px;padding:16px;display:flex;flex-wrap:wrap;gap:8px;min-height:50px;margin-bottom:12px}
+.badge-img{height:20px}
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);word-break:break-all;margin-bottom:8px;white-space:pre-wrap}
+.btn-row{display:flex;gap:8px}
+.btn{padding:8px 16px;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-ghost{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.devcard{background:linear-gradient(135deg,#13131f,#0a0a0f);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.devcard::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(0,212,170,.15),transparent);border-radius:50%}
+.devcard-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.devcard-name{font-size:1.1rem;font-weight:700;margin-bottom:4px}
+.devcard-handle{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent);margin-bottom:12px}
+.devcard-stack{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.stack-chip{background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.7rem;font-family:'JetBrains Mono',monospace}
+.devcard-footer{font-size:.7rem;color:var(--muted);display:flex;gap:12px;font-family:'JetBrains Mono',monospace}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:8px;font-size:.8rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;width:100%}
+input:focus{border-color:var(--accent)}
+.form-group{margin-bottom:12px}
+.form-label{font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">⚡ StillNotAThing</a>
+  <a href="/" class="back">← Home</a>
+</header>
+
+<div class="main">
+  <div class="hero">
+    <h1 class="hero-title">📛 Stack Badge Generator</h1>
+    <p class="hero-sub">Add live happiness scores to your GitHub README. Free forever.</p>
+    <div class="hero-why">
+      <strong>Why add this?</strong> Show your stack with real community happiness scores. Badges auto-update daily. Readers see "Supabase 9.2/10 ↑ Rising" and click through to learn more.
+    </div>
+  </div>
+
+  <!-- DEVCARD -->
+  <div class="section">
+    <div class="section-title">// Your DevCard</div>
+    <div class="form-group">
+      <label class="form-label">Your name</label>
+      <input id="devcard-name" placeholder="e.g. Jamie" oninput="updateDevCard()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">GitHub handle</label>
+      <input id="devcard-handle" placeholder="e.g. jammiejammmie" oninput="updateDevCard()">
+    </div>
+
+    <div class="devcard" id="devcard-preview">
+      <div class="devcard-title">// StillNotAThing DevCard</div>
+      <div class="devcard-name" id="dc-name">Your Name</div>
+      <div class="devcard-handle" id="dc-handle">@handle</div>
+      <div class="devcard-stack" id="dc-stack"></div>
+      <div class="devcard-footer">
+        <span>stillnotathing.com</span>
+        <span id="dc-date"></span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="copyDevCard()">Copy DevCard code</button>
+      <button class="btn btn-ghost" onclick="shareDevCard()">↗ Share</button>
+    </div>
+  </div>
+
+  <!-- TOOL BADGES -->
+  <div class="section">
+    <div class="section-title">// Select tools for badges</div>
+    <div class="tool-grid" id="tool-grid"></div>
+
+    <div class="badge-preview">
+      <div class="badge-preview-title">// Preview</div>
+      <div class="badge-preview-area" id="badge-preview-area">
+        <span style="color:var(--muted);font-size:.78rem">Select tools above to preview badges</span>
+      </div>
+      <div class="code-block" id="badge-code"><!-- Select tools to generate README code --></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="copyBadgeCode()">Copy README code</button>
+        <button class="btn btn-ghost" onclick="shareAll()">↗ Share</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMBED WIDGET -->
+  <div class="section">
+    <div class="section-title">// Embed Widget (for your site)</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Add a live tool status widget to your site or blog. Auto-updates daily.</p>
+      <div class="code-block">&lt;iframe src="https://stillnotathing.com/widget" width="100%" height="200" frameborder="0"&gt;&lt;/iframe&gt;</div>
+      <button class="btn btn-ghost" style="font-size:.75rem" onclick="copyWidget()">Copy embed code</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tools = [
+  { id: 'vercel', name: 'Vercel', icon: '⬡', happiness: 7.4, trend: '→' },
+  { id: 'supabase', name: 'Supabase', icon: '🗄', happiness: 9.2, trend: '↑' },
+  { id: 'netlify', name: 'Netlify', icon: '🌐', happiness: 8.1, trend: '↑' },
+  { id: 'stripe', name: 'Stripe', icon: '💳', happiness: 8.7, trend: '→' },
+  { id: 'railway', name: 'Railway', icon: '🚂', happiness: 8.9, trend: '↑' },
+  { id: 'clerk', name: 'Clerk', icon: '🔑', happiness: 9.0, trend: '↑' },
+  { id: 'resend', name: 'Resend', icon: '📧', happiness: 9.3, trend: '↑' },
+  { id: 'github', name: 'GitHub', icon: '⚙', happiness: 8.5, trend: '→' }
+];
+
+const selectedTools = new Set();
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function renderToolGrid() {
+  document.getElementById('tool-grid').innerHTML = tools.map(t => `
+    <div class="tool-btn ${selectedTools.has(t.id) ? 'selected' : ''}" onclick="toggleTool('${t.id}')">
+      <div class="tool-btn-name">${t.icon} ${t.name}</div>
+      <div class="tool-btn-score">${t.happiness}/10 ${t.trend}</div>
+    </div>
+  `).join('');
+}
+
+function toggleTool(id) {
+  if (selectedTools.has(id)) selectedTools.delete(id);
+  else selectedTools.add(id);
+  renderToolGrid();
+  updateBadgePreview();
+  updateDevCard();
+}
+
+function updateBadgePreview() {
+  const area = document.getElementById('badge-preview-area');
+  const code = document.getElementById('badge-code');
+  const selected = [...selectedTools].map(id => tools.find(t => t.id === id)).filter(Boolean);
+
+  if (selected.length === 0) {
+    area.innerHTML = '<span style="color:var(--muted);font-size:.78rem">Select tools above to preview badges</span>';
+    code.textContent = '<!-- Select tools to generate README code -->';
+    return;
+  }
+
+  area.innerHTML = selected.map(t =>
+    `<img class="badge-img" src="https://stillnotathing.com/.netlify/functions/badge?tool=${t.id}" alt="${t.name} ${t.happiness}/10">`
+  ).join('');
+
+  const markdownBadges = selected.map(t =>
+    `[![${t.name} ${t.happiness}/10](https://stillnotathing.com/.netlify/functions/badge?tool=${t.id})](https://stillnotathing.com/tools#${t.id})`
+  ).join('\n');
+
+  code.textContent = markdownBadges;
+}
+
+function updateDevCard() {
+  const name = document.getElementById('devcard-name').value || 'Your Name';
+  const handle = document.getElementById('devcard-handle').value || 'handle';
+  const selected = [...selectedTools].map(id => tools.find(t => t.id === id)).filter(Boolean);
+
+  document.getElementById('dc-name').textContent = name;
+  document.getElementById('dc-handle').textContent = '@' + handle;
+  document.getElementById('dc-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+  const stack = document.getElementById('dc-stack');
+  if (selected.length > 0) {
+    stack.innerHTML = selected.map(t => `<span class="stack-chip">${t.icon} ${t.name}</span>`).join('');
+  } else {
+    stack.innerHTML = '<span style="color:var(--muted);font-size:.75rem">Select tools above</span>';
+  }
+}
+
+function copyDevCard() {
+  const handle = document.getElementById('devcard-handle').value || 'yourusername';
+  const selected = [...selectedTools].map(id => tools.find(t => t.id === id)).filter(Boolean);
+  const stackParam = selected.map(t => t.id).join(',');
+
+  const code = `[![StillNotAThing DevCard](https://stillnotathing.com/.netlify/functions/badge?type=devcard&user=${handle}&stack=${stackParam})](https://stillnotathing.com/badge)`;
+  navigator.clipboard.writeText(code);
+  showToast('DevCard code copied! Paste in your GitHub README 🎉');
+}
+
+function copyBadgeCode() {
+  const code = document.getElementById('badge-code').textContent;
+  if (code.includes('Select tools')) { showToast('Select some tools first!'); return; }
+  navigator.clipboard.writeText(code);
+  showToast('Badge code copied! Paste in your GitHub README ✓');
+}
+
+function shareAll() {
+  const selected = [...selectedTools].join(',');
+  const url = `https://stillnotathing.com/badge?stack=${selected}`;
+  if (navigator.share) {
+    navigator.share({ title: 'My dev stack on StillNotAThing', url });
+  } else {
+    navigator.clipboard.writeText(url);
+    showToast('Link copied! ✓');
+  }
+}
+
+function shareDevCard() {
+  const handle = document.getElementById('devcard-handle').value || '';
+  const url = `https://stillnotathing.com/badge?user=${handle}`;
+  if (navigator.share) {
+    navigator.share({ title: 'My StillNotAThing DevCard', url });
+  } else {
+    navigator.clipboard.writeText(url);
+    showToast('DevCard link copied! ✓');
+  }
+}
+
+function copyWidget() {
+  navigator.clipboard.writeText('<iframe src="https://stillnotathing.com/widget" width="100%" height="200" frameborder="0"></iframe>');
+  showToast('Widget code copied! ✓');
+}
+
+// Load from URL params
+const params = new URLSearchParams(window.location.search);
+if (params.get('stack')) {
+  params.get('stack').split(',').forEach(id => selectedTools.add(id));
+}
+
+renderToolGrid();
+updateBadgePreview();
+updateDevCard();
+</script>
+</body>
+</html>
