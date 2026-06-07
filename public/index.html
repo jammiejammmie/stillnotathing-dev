@@ -2,1447 +2,1081 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StillNotAThing — Developer Morning Page</title>
-<meta name="description" content="Daily dev resources, tool scorecards, HN stories, and guides for indie hackers and solo builders.">
-<meta property="og:title" content="StillNotAThing — Developer Morning Page">
-<meta property="og:description" content="We track what developers are struggling with — and what opportunities that creates. Daily tool scores, HN stories, and guides.">
-<meta property="og:image" content="https://stillnotathing.com/.netlify/functions/og-image?type=pain">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>StillNotAThing — Developer Pain Radar</title>
+<meta name="description" content="Track what developers are struggling with today — and what opportunities that creates.">
+<meta property="og:title" content="StillNotAThing — Developer Pain Radar">
+<meta property="og:description" content="Developers complain. Opportunities appear. We track both.">
+<meta property="og:image" content="https://stillnotathing.com/og.png">
 <meta property="og:url" content="https://stillnotathing.com">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://stillnotathing.com/.netlify/functions/og-image?type=pain">
-<meta name="twitter:title" content="StillNotAThing — Developer Morning Page">
-<meta name="twitter:description" content="We track what developers are struggling with — and what opportunities that creates.">
 <link rel="canonical" href="https://stillnotathing.com">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#0a0a0f;--surface:#111118;--card:#13131f;--border:#1e1e2e;
   --text:#e8e8f0;--muted:#6b6b80;--accent:#00d4aa;--accent2:#7c5cfc;
-  --up:#22c55e;--down:#ef4444;--warn:#f59e0b;
+  --up:#22c55e;--down:#ef4444;--warn:#f59e0b
 }
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;padding-bottom:70px}
 
 /* HEADER */
-header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.logo{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--accent);display:flex;align-items:center;gap:8px}
-.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
-.header-right{display:flex;align-items:center;gap:10px}
-.streak-badge{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--warn);padding:4px 10px;border-radius:100px;font-size:.72rem;font-family:'JetBrains Mono',monospace;cursor:pointer}
-.auth-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:7px;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;transition:all .15s}
-.auth-btn:hover{border-color:var(--accent);color:var(--accent)}
-.user-avatar{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);cursor:pointer}
+header{background:rgba(10,10,15,.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none}
+.logo-icon{background:var(--accent);color:#000;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900}
+.auth-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:7px;font-size:.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px}
+.streak-badge{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--warn);padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;display:none}
 
 /* TICKER */
-.ticker{background:rgba(0,212,170,.04);border-bottom:1px solid rgba(0,212,170,.1);padding:7px 20px;display:flex;align-items:center;gap:10px;overflow:hidden}
-.ticker-live{background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0}
-.ticker-wrap{overflow:hidden;flex:1}
-.ticker-scroll{display:flex;gap:24px;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);white-space:nowrap;animation:tickerMove 40s linear infinite}
-@keyframes tickerMove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px;overflow:hidden}
+.ticker-live{background:var(--down);color:#fff;font-size:.55rem;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.ticker-wrap{flex:1;overflow:hidden}
+.ticker-scroll{display:flex;gap:20px;animation:ticker 30s linear infinite;white-space:nowrap;font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.ticker-scroll:hover{animation-play-state:paused}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .t-up{color:var(--up)}.t-down{color:var(--down)}.t-warn{color:var(--warn)}
 
 /* HERO */
-.hero{padding:32px 20px 24px;border-bottom:1px solid var(--border)}
-.hero-date{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
-.hero-title{font-size:clamp(1.8rem,5vw,3rem);font-weight:700;letter-spacing:-1px;line-height:1.1;margin-bottom:8px}
-.cursor{display:inline-block;width:3px;height:.85em;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink 1s infinite}
-@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
-.hero-sub{color:var(--muted);font-size:.88rem;margin-bottom:20px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s}.stat-card:hover{border-color:var(--accent);transform:translateY(-1px)}
-.stat-num{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1;margin-bottom:3px}
-.stat-label{font-size:.65rem;color:var(--muted)}
+.hero{padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.hero-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.hero-title{font-size:clamp(1.6rem,5vw,2.4rem);font-weight:700;letter-spacing:-1px;line-height:1.15;margin-bottom:8px}
+.hero-sub{color:var(--muted);font-size:.82rem;line-height:1.5}
 
-/* NAV TABS */
-.nav-tabs{display:flex;gap:2px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto}
-.nav-tab{padding:10px 16px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
-.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.nav-tab:hover{color:var(--text)}
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.stat-card:hover{border-color:#2e2e40}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--accent);margin-bottom:2px}
+.stat-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:90}
+.tab{flex:1;padding:10px 6px;font-size:.75rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-align:center;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+
+/* PAGES */
+.page{display:none;padding:12px 16px}
+.page.active{display:block}
 
 /* SECTIONS */
-.page{display:none;padding:20px}.page.active{display:block}
-.section{margin-bottom:24px}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.section-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.section-more{font-size:.72rem;color:var(--accent);cursor:pointer;font-weight:500}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.section-more{font-size:.7rem;color:var(--accent);cursor:pointer;text-decoration:none}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;transition:border-color .15s}
+.card:hover{border-color:#2e2e40}
+.card-clickable{cursor:pointer}
+.card-clickable:hover{border-color:var(--accent)}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,var(--surface) 25%,var(--card) 50%,var(--surface) 75%);background-size:200% 100%;animation:skel 1.5s infinite;border-radius:6px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* GUIDE CARD */
-.guide-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .15s;margin-bottom:10px}
-.guide-card:hover{border-color:#2e2e40}
-.guide-card:last-child{margin-bottom:0}
-.guide-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.guide-tag{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:3px;background:rgba(0,212,170,.1);color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
-.guide-actions{display:flex;gap:6px;align-items:center}
-.guide-title{font-size:.95rem;font-weight:700;line-height:1.3;margin-bottom:6px;color:var(--text)}
-.guide-desc{font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px}
-.guide-meta{display:flex;gap:12px;align-items:center;font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.read-badge{background:rgba(34,197,94,.1);color:var(--up);padding:2px 6px;border-radius:3px;font-size:.6rem}
-
-/* ACTION BUTTONS */
-.btn-icon{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:5px;font-size:.7rem;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px}
-.btn-icon:hover{border-color:var(--accent);color:var(--accent)}
-.btn-icon.active{background:rgba(0,212,170,.1);border-color:var(--accent);color:var(--accent)}
-.btn-icon.bookmarked{background:rgba(245,158,11,.1);border-color:var(--warn);color:var(--warn)}
-
-/* HN */
-.hn-item{padding:11px 0;border-bottom:1px solid var(--border);display:flex;gap:8px}
-.hn-item:last-child{border-bottom:none}
-.hn-num{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--border);font-weight:700;min-width:16px;margin-top:2px}
-.hn-content{flex:1}
-.hn-title{font-size:.82rem;color:var(--text);line-height:1.4;margin-bottom:3px;cursor:pointer;text-decoration:none;display:block}
-.hn-title:hover{color:var(--accent)}
-.hn-meta{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.hn-comment{font-style:italic;color:var(--accent);font-family:'DM Sans',sans-serif}
+.guide-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.guide-card:hover{border-color:var(--accent)}
+.guide-title{font-size:.9rem;font-weight:700;margin-bottom:5px;line-height:1.3}
+.guide-desc{font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.guide-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font-size:.62rem;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-weight:500}
 
 /* TOOL CARD */
-.tool-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;transition:all .15s}
-.tool-card:hover{border-color:#2e2e40}
-.tool-header{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between}
-.tool-left{display:flex;align-items:center;gap:8px}
-.tool-icon{width:30px;height:30px;background:var(--surface);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem}
-.tool-name{font-weight:700;font-size:.88rem}
+.tool-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.tool-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tool-icon{font-size:1.2rem}
+.tool-name{font-weight:700;font-size:.9rem}
 .tool-cat{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.trend-badge{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:100px}
-.trend-up{background:rgba(34,197,94,.1);color:var(--up)}
-.trend-down{background:rgba(239,68,68,.1);color:var(--down)}
-.trend-flat{background:rgba(107,107,128,.1);color:var(--muted)}
-.tool-scores{padding:0 14px 2px}
-.score-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-.score-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);width:40px}
-.score-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-.score-fill{height:100%;border-radius:2px}
-.fill-dx{background:var(--accent)}.fill-price{background:var(--accent2)}.fill-rage{background:var(--down)}
-.score-val{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;width:20px;text-align:right}
-.tool-happiness{margin:5px 14px 8px;background:var(--surface);border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between}
-.happiness-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted)}
-.happiness-score{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:5px}
-.happiness-score span{font-size:.62rem;color:var(--muted);font-weight:400}
-.tool-footer{border-top:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;justify-content:space-between}
-.vote-label{font-size:.62rem;color:var(--muted)}
-.vote-btns{display:flex;gap:5px}
-.vote-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:5px;font-size:.68rem;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
-.vote-btn:hover{border-color:var(--accent);color:var(--accent)}
-.vote-btn.voted-love{background:rgba(0,212,170,.1);border-color:var(--accent);color:var(--accent)}
-.vote-btn.voted-hate{background:rgba(239,68,68,.1);border-color:var(--down);color:var(--down)}
-.rage-note{margin:0 14px 8px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);color:var(--down);border-radius:5px;padding:5px 8px;font-size:.68rem;display:flex;align-items:center;gap:5px}
+.score-row{display:flex;gap:8px;justify-content:space-between}
+.score-item{flex:1;background:var(--surface);border-radius:6px;padding:6px 8px;text-align:center}
+.score-num{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700}
+.score-label{font-size:.55rem;color:var(--muted);text-transform:uppercase}
 
-/* EMPTY / LOADING */
-.empty{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem}
-.loading{text-align:center;padding:20px;color:var(--muted);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+/* HN */
+.hn-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.hn-item:hover{border-color:#2e2e40}
+.hn-title{font-size:.82rem;font-weight:600;margin-bottom:5px;line-height:1.3}
+.hn-meta{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);display:flex;gap:8px}
 
-/* STREAK MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:320px;width:90%;text-align:center}
-.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:8px}
-.modal-sub{font-size:.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5}
-.modal-close{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px 20px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem}
+/* BUTTON */
+.btn{padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-secondary{background:var(--surface);border:1px solid var(--border);color:var(--muted)}
 
-/* COMMENTS */
-#comments-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
-.comments-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:16px}
+/* PAIN DETAIL OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.overlay-card{background:var(--card);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:700px;max-height:80vh;overflow-y:auto}
 
-/* PROFILE PAGE */
-.profile-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
-.profile-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.profile-avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--accent)}
-.profile-name{font-size:1.05rem;font-weight:700}
-.profile-handle{font-size:.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.profile-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
-.profile-stat-num{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--accent)}
-.profile-stat-label{font-size:.62rem;color:var(--muted)}
-.stack-tags{display:flex;gap:6px;flex-wrap:wrap}
-.stack-tag{background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.2);color:var(--accent);padding:4px 10px;border-radius:5px;font-size:.72rem;font-family:'JetBrains Mono',monospace}
+/* ONBOARDING */
+.onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.onboarding-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+.stack-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px}
+.stack-tool{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;user-select:none}
+.stack-tool.selected{background:rgba(0,212,170,.12);border-color:var(--accent)}
 
-/* BADGE */
-.badge-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
-.badge-title{font-size:.82rem;font-weight:700;margin-bottom:8px}
-.badge-code{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);word-break:break-all;margin-bottom:8px}
+/* GUIDE DETAIL */
+.guide-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;overflow-y:auto}
+.guide-overlay-inner{max-width:700px;margin:0 auto;padding:16px}
 
-/* SUBMIT TOOL */
-.submit-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
-.form-group{margin-bottom:14px}
-.form-label{font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
-.form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;transition:border-color .15s}
-.form-input:focus{border-color:var(--accent)}
-.form-select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none}
-.btn-submit{background:var(--accent);border:none;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%}
-
-/* NEWSLETTER */
-.newsletter-bar{background:rgba(124,92,252,.06);border:1px solid rgba(124,92,252,.15);border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.newsletter-text{font-size:.8rem;color:var(--text);flex:1;min-width:160px}
-.newsletter-text span{color:var(--accent2);font-weight:600}
-.newsletter-input-wrap{display:flex;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface)}
-.newsletter-input{background:none;border:none;padding:8px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;min-width:160px}
-.newsletter-btn{background:var(--accent2);border:none;color:#fff;padding:8px 14px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-
-/* PUSH BANNER */
-.push-banner{background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:center;justify-content:space-between}
-.push-text{font-size:.78rem;color:var(--muted)}
-.push-btn{background:var(--accent);border:none;color:#000;padding:6px 14px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
-
-/* FOOTER */
-footer{padding:20px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:.72rem;font-family:'JetBrains Mono',monospace}
-footer a{color:var(--accent);text-decoration:none}
+/* EMPTY */
+.empty{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;color:var(--muted);font-size:.82rem}
 
 /* TOAST */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:8px;font-size:.8rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:8px;font-size:.78rem;z-index:600;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1}
 
-/* LOGIN PROMPT */
-.login-prompt{background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:8px;padding:12px;text-align:center;font-size:.78rem;color:var(--muted);margin-top:8px}
-.login-prompt a{color:var(--accent);cursor:pointer}
+/* MOMENTUM */
+.momentum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.momentum-col{border-radius:10px;padding:12px}
+.momentum-up{background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15)}
+.momentum-down{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15)}
+.momentum-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.momentum-item{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.momentum-item:last-child{border-bottom:none}
+
+/* ACHIEVEMENTS */
+.achievement-badge{background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.15);border-radius:8px;padding:8px 12px;display:inline-flex;align-items:center;gap:6px;margin:3px}
+
+/* PROFILE */
+.profile-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;flex:1}
+.profile-stat-num{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700}
+.profile-stat-label{font-size:.6rem;color:var(--muted);margin-top:2px}
+
+/* NEWSLETTER */
+.newsletter-box{background:linear-gradient(135deg,rgba(124,92,252,.08),rgba(0,212,170,.04));border:1px solid rgba(124,92,252,.2);border-radius:12px;padding:16px}
+.newsletter-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.82rem;width:100%;margin-bottom:8px;outline:none}
+.newsletter-input:focus{border-color:var(--accent2)}
+
+/* RAGE BAR */
+.rage-bar-wrap{width:48px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0}
+.rage-bar-fill{height:100%;border-radius:2px;transition:width .3s}
+
+/* SUBMIT */
+.form-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;width:100%;margin-bottom:10px;outline:none}
+.form-input:focus{border-color:var(--accent)}
+textarea.form-input{min-height:80px;resize:vertical}
+
+@media(max-width:380px){.hero-title{font-size:1.5rem}}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <div class="logo-icon">⚡</div>
-    StillNotAThing
-  </div>
-  <div class="header-right">
-    <div class="streak-badge" id="streak-display" onclick="showStreakModal()" style="display:none">🔥 <span id="streak-count">0</span> day streak</div>
+  <a href="/" class="logo"><div class="logo-icon">⚡</div>StillNotAThing</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="streak-badge" id="streak-badge" onclick="showStreakModal()">🔥 <span id="streak-count">0</span>d</div>
     <div id="auth-area">
       <button class="auth-btn" onclick="loginWithGitHub()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-        Sign in with GitHub
+        Sign in
       </button>
     </div>
   </div>
 </header>
 
-<div class="ticker">
+<div class="ticker" id="ticker-bar">
   <div class="ticker-live">LIVE</div>
   <div class="ticker-wrap">
-    <div class="ticker-scroll">
-      <span><span class="t-up">↑</span> Supabase happiness rising</span>
-      <span>•</span><span><span class="t-warn">⚠</span> Vercel pricing changes</span>
-      <span>•</span><span><span class="t-down">↓</span> PlanetScale rage spiking</span>
+    <div class="ticker-scroll" id="ticker-scroll">
+      <span><span class="t-down">↓</span> PlanetScale rage spiking</span>
+      <span>•</span><span><span class="t-warn">⚠</span> Vercel pricing complaints</span>
       <span>•</span><span><span class="t-up">↑</span> Railway gaining fast</span>
-      <span>•</span><span>📊 Community votes updating daily</span>
       <span>•</span><span><span class="t-up">↑</span> Supabase happiness rising</span>
-      <span>•</span><span><span class="t-warn">⚠</span> Vercel pricing changes</span>
+      <span>•</span><span><span class="t-up">↑</span> Resend loved by devs</span>
       <span>•</span><span><span class="t-down">↓</span> PlanetScale rage spiking</span>
+      <span>•</span><span><span class="t-warn">⚠</span> Vercel pricing complaints</span>
       <span>•</span><span><span class="t-up">↑</span> Railway gaining fast</span>
-      <span>•</span><span>📊 Community votes updating daily</span>
+      <span>•</span><span><span class="t-up">↑</span> Supabase happiness rising</span>
     </div>
   </div>
 </div>
 
 <div class="hero">
-  <div class="hero-date" id="hero-date">DEVELOPER PAIN RADAR // Loading...</div>
+  <div class="hero-label" id="hero-label">DEVELOPER PAIN RADAR // Loading...</div>
   <h1 class="hero-title">Developers complain.<br>Opportunities appear.</h1>
-  <p class="hero-sub">We track what developers are struggling with — and what opportunities that creates.</p>
-  <div class="stats">
-    <div class="stat-card" onclick="showPage('tools')"><div class="stat-num" id="stat-tools">—</div><div class="stat-label">tools indexed →</div></div>
-    <div class="stat-card" onclick="showPage('guides')"><div class="stat-num" id="stat-guides">—</div><div class="stat-label">guides →</div></div>
-    <div class="stat-card" onclick="showPage('hn')"><div class="stat-num" id="stat-hn">10</div><div class="stat-label">hn stories →</div></div>
-    <div class="stat-card" onclick="showPage('tools')"><div class="stat-num" id="stat-happiness">—</div><div class="stat-label">avg happiness →</div></div>
+  <p class="hero-sub">We track what developers are struggling with today — and what opportunities that creates.</p>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card" onclick="switchTab('guides')">
+    <div class="stat-num" id="stat-guides">—</div>
+    <div class="stat-label">guides today</div>
+  </div>
+  <div class="stat-card" onclick="switchTab('explore')">
+    <div class="stat-num" id="stat-happiness">—</div>
+    <div class="stat-label">avg happiness</div>
   </div>
 </div>
 
-<div class="nav-tabs">
-  <div class="nav-tab active" onclick="showPage('home')">🔥 Pain</div>
-  <div class="nav-tab" onclick="showPage('guides')">📖 Guides</div>
-  <div class="nav-tab" onclick="showPage('explore')">🔭 Explore</div>
-  <div class="nav-tab" onclick="showPage('myspace')">👤 Mine</div>
-  <div class="nav-tab" onclick="window.location.href='/radar.html'">🚀 Radar</div>
-  <div class="nav-tab" onclick="window.location.href='/calc.html'">💰 Calc</div>
+<div class="tabs">
+  <div class="tab active" id="tab-pain" onclick="switchTab('pain')">🔥 Pain</div>
+  <div class="tab" id="tab-guides" onclick="switchTab('guides')">📖 Guides</div>
+  <div class="tab" id="tab-explore" onclick="switchTab('explore')">🔭 Explore</div>
+  <div class="tab" id="tab-mine" onclick="switchTab('mine')">👤 Mine</div>
 </div>
 
-<!-- HOME PAGE -->
-<div class="page active" id="page-home">
+<!-- PAIN TAB -->
+<div class="page active" id="page-pain">
 
-  <!-- PAIN RADAR — 핵심 섹션 -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">🔥 Pain Radar <span style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">what devs are raging about today</span></div>
-      <span class="section-more" onclick="sharePainRadar()" style="color:var(--muted)">↗ share</span>
+      <div class="section-title">🔥 Pain Radar — rage scores today</div>
+      <span class="section-more" onclick="sharePainRadar()">↗ share</span>
     </div>
-    <div id="pain-radar-container"><div class="loading">Loading...</div></div>
+    <div id="pain-container">
+      <div class="skel" style="height:64px;margin-bottom:8px"></div>
+      <div class="skel" style="height:64px;margin-bottom:8px"></div>
+      <div class="skel" style="height:64px;margin-bottom:8px"></div>
+    </div>
   </div>
 
-  <!-- OPPORTUNITY FEED — Pain → Opportunity -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">💡 Opportunity Feed <span style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">pain = market gap</span></div>
+      <div class="section-title">💡 Opportunity Feed — pain = market gap</div>
     </div>
-    <div id="opportunity-container"><div class="loading">Loading...</div></div>
+    <div id="opportunity-container">
+      <div class="skel" style="height:100px;margin-bottom:8px"></div>
+      <div class="skel" style="height:100px;margin-bottom:8px"></div>
+    </div>
   </div>
 
-  <!-- TOOL MOMENTUM — 간결하게 -->
   <div class="section">
     <div class="section-header">
       <div class="section-title">📈 Tool Momentum</div>
-      <span class="section-more" onclick="showPage('explore')" style="color:var(--muted)">all scores →</span>
+      <span class="section-more" onclick="switchTab('explore')" style="color:var(--muted)">all scores →</span>
     </div>
-    <div id="momentum-container"><div class="loading">Loading...</div></div>
+    <div id="momentum-container">
+      <div class="skel" style="height:80px"></div>
+    </div>
   </div>
 
-  <!-- LATEST GUIDES — 마지막 -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">📖 Latest Guides</div>
-      <span class="section-more" onclick="showPage('guides')">all guides →</span>
+      <div class="section-title">📖 Latest Guide</div>
+      <span class="section-more" onclick="switchTab('guides')">all guides →</span>
     </div>
-    <div id="home-guide-container"><div class="loading">Loading...</div></div>
+    <div id="latest-guide-container">
+      <div class="skel" style="height:80px"></div>
+    </div>
   </div>
 
-  <!-- 숨겨진 컨테이너들 (기존 기능 유지) -->
-  <div style="display:none">
-    <div id="push-banner-container"></div>
-    <div id="newsletter-container"></div>
-    <div id="home-hn-container"></div>
-    <div id="home-tools-container"></div>
-  </div>
 </div>
 
-<!-- EXPLORE PAGE (Tools + HN + Submit) -->
-<div class="page" id="page-explore">
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">📊 Tool Scores</div>
-      <span class="section-more" onclick="showPage('submit')">+ Submit Tool</span>
-    </div>
-    <div id="explore-tools-container"><div class="loading">Loading...</div></div>
-  </div>
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">📰 HN Feed</div>
-    </div>
-    <div id="explore-hn-container"><div class="loading">Loading...</div></div>
-  </div>
-</div>
-
-<!-- TOOLS PAGE (기존 유지) -->
-<div class="page" id="page-tools">
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">📊 Tool Stack Index</div>
-      <span class="section-more" onclick="showPage('submit')">+ Submit Tool</span>
-    </div>
-    <div id="tools-page-container"><div class="loading">Loading...</div></div>
-  </div>
-</div>
-
-<!-- GUIDES PAGE -->
+<!-- GUIDES TAB -->
 <div class="page" id="page-guides">
   <div class="section">
     <div class="section-header">
       <div class="section-title">📖 All Guides</div>
     </div>
-    <div id="guides-page-container"><div class="loading">Loading...</div></div>
-  </div>
-</div>
-
-<!-- HN FEED PAGE -->
-<div class="page" id="page-hn">
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">📰 Hacker News Top Stories</div>
-    </div>
-    <div id="hn-page-container"><div class="loading">Loading...</div></div>
-  </div>
-</div>
-
-<!-- BOOKMARKS PAGE -->
-<div class="page" id="page-bookmarks">
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">🔖 Saved Articles</div>
-    </div>
-    <div id="bookmarks-container">
-      <div class="empty">Sign in with GitHub to save articles 📌</div>
+    <div id="guides-container">
+      <div class="skel" style="height:80px;margin-bottom:8px"></div>
+      <div class="skel" style="height:80px;margin-bottom:8px"></div>
+      <div class="skel" style="height:80px"></div>
     </div>
   </div>
 </div>
 
-<!-- PROFILE PAGE -->
-<!-- MY SPACE PAGE -->
-<div class="page" id="page-myspace">
+<!-- EXPLORE TAB -->
+<div class="page" id="page-explore">
   <div class="section">
     <div class="section-header">
-      <div class="section-title">👤 My Profile</div>
+      <div class="section-title">📊 Tool Scores</div>
+      <span class="section-more" onclick="switchTab('submit')">+ Submit</span>
     </div>
-    <div id="myspace-profile-container">
-      <div id="profile-content-myspace"></div>
+    <div id="tools-container">
+      <div class="skel" style="height:90px;margin-bottom:8px"></div>
+      <div class="skel" style="height:90px;margin-bottom:8px"></div>
     </div>
   </div>
   <div class="section">
     <div class="section-header">
-      <div class="section-title">🔖 Saved</div>
+      <div class="section-title">📰 Hacker News</div>
     </div>
-    <div id="myspace-bookmarks-container"><div class="loading">Loading...</div></div>
-  </div>
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">🎖️ Achievements</div>
+    <div id="hn-container">
+      <div class="skel" style="height:56px;margin-bottom:6px"></div>
+      <div class="skel" style="height:56px;margin-bottom:6px"></div>
+      <div class="skel" style="height:56px"></div>
     </div>
-    <div id="myspace-achievements-container"><div class="loading">Loading...</div></div>
-  </div>
-  <!-- Newsletter in My Space -->
-  <div style="padding:0 0 16px">
-    <div id="newsletter-myspace-container"></div>
   </div>
 </div>
 
-<div class="page" id="page-profile">
-  <div id="profile-container">
-    <div class="empty">Sign in with GitHub to see your profile 👤</div>
-  </div>
+<!-- MINE TAB -->
+<div class="page" id="page-mine">
+  <div id="mine-container"><div class="skel" style="height:120px;margin-bottom:12px"></div></div>
 </div>
 
-<!-- SUBMIT TOOL PAGE -->
+<!-- SUBMIT PAGE -->
 <div class="page" id="page-submit">
-  
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">➕ Submit a Tool</div>
+      <span class="section-more" onclick="switchTab('explore')">← back</span>
+    </div>
+    <div class="card">
+      <input class="form-input" id="submit-name" placeholder="Tool name (e.g. Railway)">
+      <input class="form-input" id="submit-url" placeholder="URL (e.g. railway.app)">
+      <textarea class="form-input" id="submit-desc" placeholder="Why should indie hackers know about this?"></textarea>
+      <button class="btn btn-primary" onclick="submitTool()" style="width:100%">Submit Tool →</button>
+    </div>
+  </div>
 </div>
 
-<footer>
-  <div>StillNotAThing.com — Daily dev resources for indie hackers</div>
-  <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center"><a href="/radar.html">🚀 Radar</a><a href="/calc.html">💰 Calc</a><a href="/badge.html">📛 Badges</a><a href="/roadmap.html">🗺️ Roadmap</a><a href="#" onclick="showPage('submit')">Submit a tool</a><a href="https://github.com/jammiejammmie/stillnotathing-dev/discussions" target="_blank">Discuss</a></div>
+<footer style="text-align:center;padding:16px;color:var(--muted);font-size:.72rem;border-top:1px solid var(--border);margin-top:8px">
+  StillNotAThing — Daily dev intelligence
+  <div style="margin-top:6px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="/radar.html" style="color:var(--muted);text-decoration:none">🚀 Radar</a>
+    <a href="/calc.html" style="color:var(--muted);text-decoration:none">💰 Calc</a>
+    <a href="/badge.html" style="color:var(--muted);text-decoration:none">📛 Badges</a>
+    <a href="/roadmap.html" style="color:var(--muted);text-decoration:none">🗺️ Roadmap</a>
+  </div>
 </footer>
 
 <div class="toast" id="toast"></div>
 
-<div class="modal-overlay" id="streak-modal">
-  <div class="modal">
-    <div style="font-size:2.5rem;margin-bottom:10px">🔥</div>
-    <div class="modal-title" id="streak-modal-title">Streak!</div>
-    <div class="modal-sub" id="streak-modal-sub">Keep coming back daily.</div>
-    <button class="modal-close" onclick="closeModal()">Got it!</button>
-  </div>
-</div>
-
-
-
-<!-- Giscus Comments (shown on guides) -->
-
-
-
-
 <script>
+// ════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════
+var SUPA_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
+var SUPA_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
+var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+var currentUser = null;
+var allTools = [];
+var userVotes = {};
+var userBookmarks = [];
+var userReads = [];
+var userStreak = 0;
 
-const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var STACK_TOOLS = [
+  {id:'vercel',name:'Vercel',emoji:'⬡',cat:'hosting'},
+  {id:'netlify',name:'Netlify',emoji:'🌐',cat:'hosting'},
+  {id:'railway',name:'Railway',emoji:'🚂',cat:'hosting'},
+  {id:'supabase',name:'Supabase',emoji:'🗄',cat:'database'},
+  {id:'planetscale',name:'PlanetScale',emoji:'🪐',cat:'database'},
+  {id:'stripe',name:'Stripe',emoji:'💳',cat:'payments'},
+  {id:'clerk',name:'Clerk',emoji:'🔑',cat:'auth'},
+  {id:'resend',name:'Resend',emoji:'📧',cat:'email'},
+  {id:'nextjs',name:'Next.js',emoji:'▲',cat:'framework'},
+  {id:'react',name:'React',emoji:'⚛️',cat:'framework'},
+  {id:'github',name:'GitHub',emoji:'⚙',cat:'devtools'},
+  {id:'cursor',name:'Cursor',emoji:'🖱️',cat:'ai'},
+  {id:'cloudflare',name:'Cloudflare',emoji:'☁️',cat:'infra'},
+  {id:'aws',name:'AWS',emoji:'🟧',cat:'infra'}
+];
 
-let currentUser = null;
-let userBookmarks = new Set();
-let userVotes = {};
-let userReadHistory = new Set();
-let hnStoriesCache = [];
+var ACHIEVEMENTS = [
+  {id:'first_vote',icon:'🗳️',title:'First Vote',desc:'Voted on a tool'},
+  {id:'first_bookmark',icon:'🔖',title:'Bookmarker',desc:'Saved first article'},
+  {id:'streak_3',icon:'🔥',title:'3-Day Streak',desc:'3 days in a row'},
+  {id:'streak_7',icon:'⚡',title:'Week Warrior',desc:'7-day streak'},
+  {id:'streak_30',icon:'🏆',title:'Month Master',desc:'30-day streak'},
+  {id:'read_5',icon:'📚',title:'Avid Reader',desc:'Read 5 articles'},
+  {id:'read_20',icon:'🧠',title:'Knowledge Seeker',desc:'Read 20 articles'}
+];
 
-// ── DATE ──
-const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const now = new Date();
-document.getElementById('hero-date').textContent = `DEVELOPER PAIN RADAR // ${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+var ALT_TOOLS = {
+  'PlanetScale':['Supabase','Neon','Railway Postgres','Turso'],
+  'Vercel':['Netlify','Railway','Cloudflare Pages','Render'],
+  'Netlify':['Vercel','Railway','Cloudflare Pages'],
+  'Stripe':['Paddle','LemonSqueezy'],
+  'Heroku':['Railway','Render','Fly.io']
+};
 
-// ── NAV ──
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  const page = document.getElementById('page-'+name);
-  if (page) page.classList.add('active');
-  const tabs = document.querySelectorAll('.nav-tab');
-  const names = ['home','tools','guides','hn','bookmarks','profile'];
-  const idx = names.indexOf(name);
-  if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
-  if (name === 'tools' && !document.getElementById('tools-page-container').dataset.loaded) loadToolsPage();
-  if (name === 'guides' && !document.getElementById('guides-page-container').dataset.loaded) loadGuidesPage();
-  if (name === 'hn' && !document.getElementById('hn-page-container').dataset.loaded) loadHNPage();
-  if (name === 'bookmarks') loadBookmarksPage();
-  if (name === 'profile') loadProfilePage();
-}
-
-// ── TOAST ──
-function toast(msg, dur=2500) {
-  const t = document.getElementById('toast');
+// ════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════
+function toast(msg, duration) {
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.classList.remove('show'); }, duration || 2500);
 }
 
-// ── AUTH ──
-async function loginWithGitHub() {
-  await sb.auth.signInWithOAuth({
+function fetchWithTimeout(url, opts, ms) {
+  ms = ms || 5000;
+  return Promise.race([
+    fetch(url, opts),
+    new Promise(function(_, reject) {
+      setTimeout(function() { reject(new Error('timeout')); }, ms);
+    })
+  ]);
+}
+
+function timeAgo(dateStr) {
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var h = Math.floor(diff / 3600000);
+  var d = Math.floor(h / 24);
+  if (d > 0) return d + 'd ago';
+  if (h > 0) return h + 'h ago';
+  return 'just now';
+}
+
+function escAttr(str) {
+  return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function getMyStack() {
+  if (!currentUser) return [];
+  try { return JSON.parse(localStorage.getItem('stack_' + currentUser.id) || '[]'); } catch(e) { return []; }
+}
+
+function saveMyStack(stack) {
+  if (!currentUser) return;
+  localStorage.setItem('stack_' + currentUser.id, JSON.stringify(stack));
+}
+
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
+function loginWithGitHub() {
+  sb.auth.signInWithOAuth({
     provider: 'github',
     options: { redirectTo: window.location.origin }
   });
 }
 
-async function logout() {
-  await sb.auth.signOut();
-  currentUser = null;
-  updateAuthUI();
-  toast('Signed out');
+function logout() {
+  sb.auth.signOut().then(function() {
+    currentUser = null;
+    updateAuthUI(null);
+    toast('Signed out');
+  });
 }
 
-function updateAuthUI() {
-  const area = document.getElementById('auth-area');
-  if (currentUser) {
-    area.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px">
-        <img class="user-avatar" src="${currentUser.user_metadata?.avatar_url}" alt="">
-        <button class="btn-icon" onclick="logout()">Sign out</button>
-      </div>`;
+function updateAuthUI(user) {
+  var area = document.getElementById('auth-area');
+  if (user) {
+    var avatar = user.user_metadata && user.user_metadata.avatar_url ? user.user_metadata.avatar_url : '';
+    var name = user.user_metadata && user.user_metadata.user_name ? user.user_metadata.user_name : 'dev';
+    area.innerHTML = '<div style="display:flex;align-items:center;gap:8px">' +
+      (avatar ? '<img src="' + avatar + '" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);cursor:pointer" onclick="switchTab(\'mine\')" onerror="this.style.display=\'none\'">' : '') +
+      '<button class="auth-btn" onclick="logout()">Sign out</button>' +
+      '</div>';
   } else {
-    area.innerHTML = `<button class="auth-btn" onclick="loginWithGitHub()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-      Sign in with GitHub
-    </button>`;
+    area.innerHTML = '<button class="auth-btn" onclick="loginWithGitHub()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>Sign in</button>';
   }
 }
 
-// ── STREAK ──
-async function checkStreak() {
+// ════════════════════════════════════════
+// STREAK
+// ════════════════════════════════════════
+function checkStreak() {
   if (!currentUser) return;
-  const today = new Date().toDateString();
-  const key = `streak_${currentUser.id}`;
-  const stored = localStorage.getItem(key);
-  let data = stored ? JSON.parse(stored) : { count: 0, lastVisit: null };
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-
-  if (data.lastVisit === today) {
-    // already visited today
-  } else if (data.lastVisit === yesterday) {
-    data.count += 1;
-    data.lastVisit = today;
+  var key = 'streak_' + currentUser.id;
+  var data = JSON.parse(localStorage.getItem(key) || '{"count":0,"last":""}');
+  var today = new Date().toDateString();
+  if (data.last === today) {
+    userStreak = data.count;
+  } else if (data.last === new Date(Date.now() - 86400000).toDateString()) {
+    data.count++;
+    data.last = today;
+    userStreak = data.count;
     localStorage.setItem(key, JSON.stringify(data));
-    if (data.count % 7 === 0) showStreakCelebration(data.count);
+    if (data.count === 7) setTimeout(function() { showStreakModal(); }, 2000);
+    if (data.count === 30) setTimeout(function() { showStreakModal(); }, 2000);
   } else {
     data.count = 1;
-    data.lastVisit = today;
+    data.last = today;
+    userStreak = 1;
     localStorage.setItem(key, JSON.stringify(data));
   }
-
-  const badge = document.getElementById('streak-display');
-  document.getElementById('streak-count').textContent = data.count;
-  badge.style.display = data.count > 0 ? 'flex' : 'none';
+  var badge = document.getElementById('streak-badge');
+  var cnt = document.getElementById('streak-count');
+  badge.style.display = 'flex';
+  cnt.textContent = userStreak;
 }
 
 function showStreakModal() {
-  const key = `streak_${currentUser?.id || 'anon'}`;
-  const stored = localStorage.getItem(key);
-  const data = stored ? JSON.parse(stored) : { count: 0 };
-  document.getElementById('streak-modal-title').textContent = `🔥 ${data.count} Day Streak!`;
-  document.getElementById('streak-modal-sub').textContent = data.count >= 30
-    ? "You're a legend. 30+ days of building in public! 🏆"
-    : data.count >= 7
-    ? "One week strong! The best indie hackers show up every day. 💪"
-    : "Keep coming back daily to build your streak!";
-  document.getElementById('streak-modal').classList.add('open');
+  toast('🔥 ' + userStreak + '-day streak! Keep it up!', 3000);
 }
 
-function showStreakCelebration(count) {
-  document.getElementById('streak-modal-title').textContent = `🎉 ${count} Day Streak!`;
-  document.getElementById('streak-modal-sub').textContent = `Incredible! You've visited ${count} days in a row. You're in the top 1% of indie hackers.`;
-  document.getElementById('streak-modal').classList.add('open');
+// ════════════════════════════════════════
+// DATA LOADING
+// ════════════════════════════════════════
+function loadTools() {
+  return fetchWithTimeout(SUPA_URL + '/rest/v1/tools?order=happiness.desc', {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+  }).then(function(r) { return r.json(); })
+  .then(function(d) { return Array.isArray(d) && d.length > 0 ? d : []; })
+  .catch(function() { return []; });
 }
 
-function closeModal() { document.getElementById('streak-modal').classList.remove('open'); }
-
-// ── BOOKMARKS ──
-async function loadUserBookmarks() {
-  if (!currentUser) return;
-  const key = `bookmarks_${currentUser.id}`;
-  const stored = localStorage.getItem(key);
-  if (stored) userBookmarks = new Set(JSON.parse(stored));
+function loadGuides(limit) {
+  var myStack = getMyStack();
+  var url = SUPA_URL + '/rest/v1/guides?order=created_at.desc&limit=' + (limit || 10);
+  return fetchWithTimeout(url, {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+  }).then(function(r) { return r.json(); })
+  .then(function(d) { return Array.isArray(d) ? d : []; })
+  .catch(function() { return []; });
 }
 
-function toggleBookmark(id, title) {
-  if (!currentUser) { toast('Sign in to bookmark articles'); return; }
-  const key = `bookmarks_${currentUser.id}`;
-  if (userBookmarks.has(id)) {
-    userBookmarks.delete(id);
-    toast('Removed from saved');
-  } else {
-    userBookmarks.add(id);
-    // Store with title
-    const bms = JSON.parse(localStorage.getItem(key+'_data') || '[]');
-    bms.push({ id, title, savedAt: new Date().toISOString() });
-    localStorage.setItem(key+'_data', JSON.stringify(bms));
-    toast('Saved! 🔖');
+function loadOpportunities() {
+  return fetchWithTimeout(SUPA_URL + '/rest/v1/opportunities?order=collected_at.desc&limit=5', {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+  }).then(function(r) { return r.json(); })
+  .then(function(d) { return Array.isArray(d) ? d : []; })
+  .catch(function() { return []; });
+}
+
+function loadHN(limit) {
+  return fetchWithTimeout('https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=' + (limit || 10) + '&numericFilters=points>50', {}, 6000)
+  .then(function(r) { return r.json(); })
+  .then(function(d) { return d.hits || []; })
+  .catch(function() { return []; });
+}
+
+// ════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════
+var tabLoaded = {};
+
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+
+  var page = document.getElementById('page-' + name);
+  var tab = document.getElementById('tab-' + name);
+  if (page) page.classList.add('active');
+  if (tab) tab.classList.add('active');
+
+  if (!tabLoaded[name]) {
+    tabLoaded[name] = true;
+    if (name === 'guides') renderGuidesTab();
+    if (name === 'explore') renderExploreTab();
+    if (name === 'mine') renderMineTab();
   }
-  localStorage.setItem(key, JSON.stringify([...userBookmarks]));
-  // Refresh bookmark buttons
-  document.querySelectorAll(`[data-bookmark-id="${id}"]`).forEach(btn => {
-    btn.classList.toggle('bookmarked', userBookmarks.has(id));
-    btn.textContent = userBookmarks.has(id) ? '🔖' : '🔖';
-  });
+
+  // URL update
+  if (name !== 'pain') history.pushState({}, '', '/?tab=' + name);
+  else history.pushState({}, '', '/');
 }
 
-// ── VOTES ──
-function vote(toolId, type, btn) {
-  if (!currentUser) { toast('Sign in to vote'); return; }
-  const key = `votes_${currentUser.id}`;
-  const stored = JSON.parse(localStorage.getItem(key) || '{}');
-  const prev = stored[toolId];
-  if (prev === type) {
-    delete stored[toolId];
-    btn.closest('.vote-btns').querySelectorAll('.vote-btn').forEach(b => {
-      b.classList.remove('voted-love','voted-hate');
+// ════════════════════════════════════════
+// PAIN TAB RENDER
+// ════════════════════════════════════════
+function renderPainRadar(tools) {
+  var c = document.getElementById('pain-container');
+  if (!c) return;
+  var sorted = tools.slice().sort(function(a, b) { return b.rage - a.rage; }).slice(0, 5);
+  if (!sorted.length) { c.innerHTML = '<div class="empty">No tool data yet.</div>'; return; }
+
+  c.innerHTML = sorted.map(function(t, i) {
+    var rageColor = t.rage >= 7 ? 'var(--down)' : t.rage >= 5 ? 'var(--warn)' : 'var(--muted)';
+    var rageEmoji = t.rage >= 7 ? '🚨' : t.rage >= 5 ? '⚠️' : '😤';
+    var barWidth = Math.round(t.rage * 10);
+    return '<div class="card card-clickable" onclick="showPainDetail(\'' + escAttr(t.name) + '\',' + t.rage + ',\'' + escAttr(t.rage_note || '') + '\')" style="display:flex;align-items:center;gap:10px">' +
+      '<div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted);width:16px">#' + (i+1) + '</div>' +
+      '<div style="font-size:1rem">' + (t.emoji || '🔧') + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:700;font-size:.85rem">' + t.name + '</div>' +
+        (t.rage_note ? '<div style="font-size:.7rem;color:' + rageColor + ';margin-top:2px">' + rageEmoji + ' ' + t.rage_note + '</div>' : '') +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        '<div style="font-family:JetBrains Mono,monospace;font-size:1rem;font-weight:700;color:' + rageColor + '">' + t.rage + '</div>' +
+        '<div style="font-size:.55rem;color:var(--muted)">rage</div>' +
+      '</div>' +
+      '<div class="rage-bar-wrap"><div class="rage-bar-fill" style="width:' + barWidth + '%;background:' + rageColor + '"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderOpportunityFeed(tools, opportunities) {
+  var c = document.getElementById('opportunity-container');
+  if (!c) return;
+  var items = opportunities;
+
+  if (!items || !items.length) {
+    var rageTools = tools.filter(function(t) { return t.rage >= 5; })
+      .sort(function(a,b) { return b.rage - a.rage; }).slice(0,3);
+    items = rageTools.map(function(t) {
+      return {
+        pain: t.name + ' frustration is growing',
+        signal: 'Rage score ' + t.rage + '/10 — ' + (t.rage_note || 'community complaints rising'),
+        opportunity: 'Better alternative or wrapper for ' + t.name,
+        potential: t.rage >= 7 ? 'HIGH' : 'MEDIUM',
+        tags: [t.category || 'devtools']
+      };
     });
-  } else {
-    stored[toolId] = type;
-    btn.closest('.vote-btns').querySelectorAll('.vote-btn').forEach(b => {
-      b.classList.remove('voted-love','voted-hate');
-    });
-    btn.classList.add(type === 'love' ? 'voted-love' : 'voted-hate');
   }
-  localStorage.setItem(key, JSON.stringify(stored));
-  userVotes = stored;
-  toast(type === 'love' ? '😍 Voted!' : '😤 Noted!');
+
+  if (!items.length) { c.innerHTML = '<div class="empty">Opportunity analysis collected daily. Check back tomorrow!</div>'; return; }
+
+  c.innerHTML = items.map(function(o) {
+    var high = o.potential === 'HIGH';
+    var potColor = high ? 'var(--up)' : 'var(--warn)';
+    var potBg = high ? 'rgba(34,197,94,.1)' : 'rgba(245,158,11,.1)';
+    var tags = (o.tags || []).map(function(tag) {
+      return '<span style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:2px 6px;border-radius:3px;font-size:.6rem;font-family:JetBrains Mono,monospace">#' + tag + '</span>';
+    }).join('');
+    return '<div class="card">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:7px">' +
+        '<div style="font-size:.85rem;font-weight:700;line-height:1.3">😤 "' + o.pain + '"</div>' +
+        '<span style="background:' + potBg + ';color:' + potColor + ';padding:2px 7px;border-radius:3px;font-size:.6rem;font-family:JetBrains Mono,monospace;flex-shrink:0">' + o.potential + '</span>' +
+      '</div>' +
+      (o.signal ? '<div style="font-size:.7rem;color:var(--muted);margin-bottom:7px;font-family:JetBrains Mono,monospace">' + o.signal + '</div>' : '') +
+      '<div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent);margin-bottom:7px">💡 ' + o.opportunity + '</div>' +
+      '<div style="display:flex;gap:4px;flex-wrap:wrap">' + tags + '</div>' +
+    '</div>';
+  }).join('');
 }
 
-// ── READ HISTORY ──
-function markRead(id) {
-  if (!currentUser) return;
-  userReadHistory.add(id);
-  const key = `read_${currentUser.id}`;
-  localStorage.setItem(key, JSON.stringify([...userReadHistory]));
-}
+function renderMomentum(tools) {
+  var c = document.getElementById('momentum-container');
+  if (!c) return;
+  var rising = tools.filter(function(t) { return t.trend === 'up'; }).slice(0,3);
+  var falling = tools.filter(function(t) { return t.trend === 'down'; }).slice(0,2);
 
-// ── SHARE ──
-function share(title, url) {
-  if (navigator.share) {
-    navigator.share({ title, url: url || location.href });
-  } else {
-    navigator.clipboard.writeText(url || location.href);
-    toast('Link copied! ✓');
-  }
-}
+  var risingHTML = rising.map(function(t) {
+    return '<div class="momentum-item">' +
+      '<span style="font-size:.85rem">' + (t.emoji||'🔧') + '</span>' +
+      '<span style="font-size:.8rem;font-weight:600;flex:1">' + t.name + '</span>' +
+      '<span style="font-family:JetBrains Mono,monospace;font-size:.72rem;color:var(--up)">' + t.happiness + '/10</span>' +
+    '</div>';
+  }).join('') || '<div style="font-size:.72rem;color:var(--muted)">All stable</div>';
 
-// ── PUSH NOTIFICATIONS ──
-function showPushBanner() {
-  if (!('Notification' in window) || Notification.permission === 'granted') return;
-  const container = document.getElementById('push-banner-container');
-  container.innerHTML = `
-    <div class="push-banner">
-      <div class="push-text">🔔 Get notified when your tools have outages or price changes</div>
-      <button class="push-btn" onclick="requestPush()">Enable alerts</button>
-    </div>`;
-}
+  var fallingHTML = falling.map(function(t) {
+    return '<div class="momentum-item">' +
+      '<span style="font-size:.85rem">' + (t.emoji||'🔧') + '</span>' +
+      '<span style="font-size:.8rem;font-weight:600;flex:1">' + t.name + '</span>' +
+      '<span style="font-family:JetBrains Mono,monospace;font-size:.72rem;color:var(--down)">' + t.happiness + '/10</span>' +
+    '</div>';
+  }).join('') || '<div style="font-size:.72rem;color:var(--muted)">None</div>';
 
-async function requestPush() {
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    document.getElementById('push-banner-container').innerHTML = '';
-    toast('🔔 Push notifications enabled!');
-  }
-}
-
-// ── NEWSLETTER ──
-function showNewsletter() {
-  const container = document.getElementById('newsletter-container');
-  container.innerHTML = `
-    <div class="newsletter-bar">
-      <div class="newsletter-text">📬 Weekly digest: <span>most rageful tools</span>, top guides, indie hacker wins</div>
-      <div class="newsletter-input-wrap">
-        <input class="newsletter-input" id="nl-email" type="email" placeholder="your@email.com">
-        <button class="newsletter-btn" onclick="subscribeNewsletter()">Subscribe →</button>
-      </div>
-    </div>`;
-}
-
-async function subscribeNewsletter() {
-  const email = document.getElementById('nl-email').value;
-  if (!email || !email.includes('@')) { toast('Enter a valid email'); return; }
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/email_subscribers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ email, subscribed_at: new Date().toISOString() })
-    });
-  } catch(e) {}
-  document.getElementById('newsletter-container').innerHTML = '';
-  toast('🎉 Subscribed! See you next week.');
-}
-
-// ── LOAD HN ──
-async function loadHN(limit=5) {
-  if (hnStoriesCache.length > 0) return hnStoriesCache.slice(0, limit);
-  try {
-    const res = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
-    const ids = await res.json();
-    const stories = await Promise.all(ids.slice(0,10).map(id =>
-      fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json())
-    ));
-    hnStoriesCache = stories;
-    document.getElementById('stat-hn').textContent = '10';
-    return stories.slice(0, limit);
-  } catch(e) { return []; }
-}
-
-const hnComments = [
-  'Worth reading — especially the pricing part.',
-  'This will affect how you build your next SaaS.',
-  'The indie maker angle here is underrated.',
-  'Practical. No fluff. Read this one.',
-  'Lots of discussion in the comments.',
-  'Good context on where this is heading.',
-  'This changes the calculus for solo builders.',
-  'Short but worth your time.',
-  'Community is split on this.',
-  'The benchmarks are interesting.'
-];
-
-function renderHNItem(s, i) {
-  const url = s.url || `https://news.ycombinator.com/item?id=${s.id}`;
-  const shareUrl = `https://stillnotathing.com/?hn=${s.id}`;
-  const comment = hnComments[i % hnComments.length];
-  return `
-    <div class="hn-item">
-      <div class="hn-num">${String(i+1).padStart(2,'0')}</div>
-      <div class="hn-content">
-        <a class="hn-title" href="${url}" target="_blank" onclick="markRead('hn_${s.id}')">${s.title}</a>
-        <div class="hn-meta">
-          <span>${s.score} pts</span>
-          <span>${s.descendants||0} comments</span>
-          <span class="hn-comment">${comment}</span>
-          <button class="btn-icon" onclick="shareHN(${s.id},'${s.title.replace(/'/g,"\\'")}','${url}','${comment}')">↗ share</button>
-          <button class="btn-icon ${userBookmarks.has('hn_'+s.id)?'bookmarked':''}" data-bookmark-id="hn_${s.id}" onclick="toggleBookmark('hn_${s.id}','${s.title.replace(/'/g,"\\'")}')">🔖</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-// ── LOAD TOOLS ──
-const defaultTools = [
-  {id:'vercel',name:'Vercel',category:'hosting',emoji:'⬡',trend:'flat',dx:8.8,price:5.2,rage:5.8,happiness:7.4,happiness_emoji:'😐',rage_note:'Pricing complaints up this week'},
-  {id:'supabase',name:'Supabase',category:'database',emoji:'🗄',trend:'up',dx:9.1,price:8.6,rage:1.8,happiness:9.2,happiness_emoji:'🥰',rage_note:null},
-  {id:'netlify',name:'Netlify',category:'hosting',emoji:'🌐',trend:'up',dx:8.2,price:7.8,rage:2.8,happiness:8.1,happiness_emoji:'😊',rage_note:null},
-  {id:'stripe',name:'Stripe',category:'payments',emoji:'💳',trend:'flat',dx:9.4,price:6.0,rage:2.2,happiness:8.7,happiness_emoji:'😄',rage_note:null},
-  {id:'railway',name:'Railway',category:'hosting',emoji:'🚂',trend:'up',dx:8.7,price:7.4,rage:1.4,happiness:8.9,happiness_emoji:'🤩',rage_note:null},
-  {id:'clerk',name:'Clerk',category:'auth',emoji:'🔑',trend:'up',dx:9.0,price:7.0,rage:1.2,happiness:9.0,happiness_emoji:'😍',rage_note:null},
-  {id:'resend',name:'Resend',category:'email',emoji:'📧',trend:'up',dx:9.2,price:8.8,rage:0.8,happiness:9.3,happiness_emoji:'🥰',rage_note:null},
-  {id:'planetscale',name:'PlanetScale',category:'database',emoji:'🪐',trend:'down',dx:7.4,price:2.8,rage:8.2,happiness:4.1,happiness_emoji:'😤',rage_note:'Free tier removed — community angry'}
-];
-
-async function loadTools() {
-  let tools = defaultTools;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tools?order=happiness.desc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (res.ok) { const d = await res.json(); if (d?.length > 0) tools = d; }
-  } catch(e) {}
-  return tools;
-}
-
-function renderToolCard(t, compact=false) {
-  const voteState = userVotes[t.id||t.name] || '';
-  return `
-    <div class="tool-card">
-      <div class="tool-header">
-        <div class="tool-left">
-          <div class="tool-icon">${t.emoji||'🔧'}</div>
-          <div>
-            <div class="tool-name">${t.name}</div>
-            <div class="tool-cat">${t.category}</div>
-          </div>
-        </div>
-        <div class="trend-badge ${t.trend==='up'?'trend-up':t.trend==='down'?'trend-down':'trend-flat'}">
-          ${t.trend==='up'?'↑ Rising':t.trend==='down'?'↓ Falling':'→ Stable'}
-        </div>
-      </div>
-      <div class="tool-scores">
-        <div class="score-row"><div class="score-label">DX</div><div class="score-track"><div class="score-fill fill-dx" style="width:${t.dx*10}%"></div></div><div class="score-val">${t.dx}</div></div>
-        <div class="score-row"><div class="score-label">Price</div><div class="score-track"><div class="score-fill fill-price" style="width:${t.price*10}%"></div></div><div class="score-val">${t.price}</div></div>
-        <div class="score-row"><div class="score-label">Rage</div><div class="score-track"><div class="score-fill fill-rage" style="width:${t.rage*10}%"></div></div><div class="score-val">${t.rage}</div></div>
-      </div>
-      ${t.rage_note?`<div class="rage-note">🔥 ${t.rage_note}</div>`:''}
-      <div class="tool-happiness">
-        <div class="happiness-label">Indie Hacker Happiness</div>
-        <div class="happiness-score">${t.happiness} <span>/ 10</span> ${t.happiness_emoji||''}</div>
-      </div>
-      <div class="tool-footer">
-        <div class="vote-label">Rate your experience</div>
-        <div class="vote-btns">
-          <button class="vote-btn ${voteState==='love'?'voted-love':''}" onclick="vote('${t.id||t.name}','love',this)">😍 Love it</button>
-          <button class="vote-btn ${voteState==='hate'?'voted-hate':''}" onclick="vote('${t.id||t.name}','hate',this)">😤 Hate it</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-// ── LOAD GUIDES ──
-async function loadGuides(limit=1) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/guides?order=created_at.desc&limit=${limit}`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (res.ok) { const d = await res.json(); return d||[]; }
-  } catch(e) {}
-  return [];
+  c.innerHTML = '<div class="momentum-grid">' +
+    '<div class="momentum-col momentum-up"><div class="momentum-label" style="color:var(--up)">↑ Rising Fast</div>' + risingHTML + '</div>' +
+    '<div class="momentum-col momentum-down"><div class="momentum-label" style="color:var(--down)">↓ Losing Ground</div>' + fallingHTML + '</div>' +
+  '</div>';
 }
 
 function renderGuideCard(g) {
-  const isRead = userReadHistory.has('guide_'+g.id);
-  const isBookmarked = userBookmarks.has('guide_'+g.id);
-  return `
-    <div class="guide-card" onclick="openGuide('${g.id}')">
-      <div class="guide-top">
-        <span class="guide-tag">${g.category||'Guide'}</span>
-        <div class="guide-actions">
-          ${isRead?'<span class="read-badge">✓ Read</span>':''}
-          <button class="btn-icon ${isBookmarked?'bookmarked':''}" data-bookmark-id="guide_${g.id}" onclick="event.stopPropagation();toggleBookmark('guide_${g.id}','${(g.title||'').replace(/'/g,"\\'")}')">🔖</button>
-          <button class="btn-icon" onclick="event.stopPropagation();share('${(g.title||'').replace(/'/g,"\\'")}')">↗</button>
-        </div>
-      </div>
-      <div class="guide-title">${g.title}</div>
-      <div class="guide-desc">${g.description||''}</div>
-      <div class="guide-meta">
-        <span>${(g.read_time||'5 min read').replace(' read read',' read')}</span>
-        ${g.tags?g.tags.map(tag=>`<span>#${tag}</span>`).join(''):''}
-      </div>
-    </div>`;
+  var tags = (g.tags || []).map(function(tag) {
+    return '<span class="tag" style="background:rgba(0,212,170,.06);color:var(--muted)">#' + tag + '</span>';
+  }).join('');
+  return '<div class="guide-card" onclick="openGuide(\'' + g.id + '\')">' +
+    '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
+      '<span class="tag" style="background:rgba(124,92,252,.08);color:var(--accent2)">' + (g.category || 'guide') + '</span>' +
+      '<span style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted)">' + (g.read_time || '5 min read') + '</span>' +
+    '</div>' +
+    '<div class="guide-title">' + (g.title || '') + '</div>' +
+    '<div class="guide-desc">' + (g.description || '') + '</div>' +
+    '<div class="guide-meta">' + tags + '</div>' +
+  '</div>';
 }
 
-// ── HOME PAGE ──
-async function loadHome() {
-  const [stories, tools, guides] = await Promise.all([
-    loadHN(5).catch(() => []),
-    loadTools().catch(() => defaultTools),
-    loadGuides(1).catch(() => [])
-  ]);
-
-  // Guide
-  const gc = document.getElementById('home-guide-container');
-  gc.innerHTML = guides.length > 0 ? renderGuideCard(guides[0]) : '<div class="empty">No guide today yet. Check back soon.</div>';
-  document.getElementById('stat-guides').textContent = guides.length || '0';
-
-  // HN
-  const hnc = document.getElementById('home-hn-container');
-  hnc.innerHTML = stories.map((s,i) => renderHNItem(s,i)).join('') || '<div class="empty">Could not load stories.</div>';
-
-  // Pain Radar
-  renderPainRadar(tools);
-
-  // Tool Momentum
-  renderMomentum(tools);
-
-  // Opportunity Feed
-  renderOpportunityFeed(tools);  // async - loads from Supabase
-
-  // Tools (top 3)
-  const tc = document.getElementById('home-tools-container');
-  const topTools = tools.slice(0,3);
-  tc.innerHTML = topTools.map(t => renderToolCard(t, true)).join('');
-  const avg = (tools.reduce((a,t)=>a+t.happiness,0)/tools.length).toFixed(1);
-  document.getElementById('stat-tools').textContent = tools.length;
-  document.getElementById('stat-happiness').textContent = avg;
+// ════════════════════════════════════════
+// GUIDES TAB
+// ════════════════════════════════════════
+function renderGuidesTab() {
+  var c = document.getElementById('guides-container');
+  loadGuides(20).then(function(guides) {
+    if (!guides.length) { c.innerHTML = '<div class="empty">Guides are being generated. Check back soon!</div>'; return; }
+    c.innerHTML = guides.map(renderGuideCard).join('');
+    document.getElementById('stat-guides').textContent = guides.length;
+  });
 }
 
-// ── TOOLS PAGE ──
-async function loadToolsPage() {
-  const tools = await loadTools();
-  const c = document.getElementById('tools-page-container');
-  c.innerHTML = tools.map(t => renderToolCard(t)).join('');
-  c.dataset.loaded = '1';
-}
+// ════════════════════════════════════════
+// EXPLORE TAB
+// ════════════════════════════════════════
+function renderExploreTab() {
+  var tc = document.getElementById('tools-container');
+  var hnc = document.getElementById('hn-container');
 
-// ── GUIDES PAGE ──
-async function loadGuidesPage() {
-  const guides = await loadGuides(50);
-  const c = document.getElementById('guides-page-container');
-  c.innerHTML = guides.length > 0 ? guides.map(g => renderGuideCard(g)).join('') : '<div class="empty">Guides are being generated. Check back soon!</div>';
-  c.dataset.loaded = '1';
-}
-
-// ── HN FULL PAGE ──
-async function loadHNPage() {
-  const stories = await loadHN(10);
-  const c = document.getElementById('hn-page-container');
-  c.innerHTML = stories.map((s,i) => renderHNItem(s,i)).join('');
-  c.dataset.loaded = '1';
-}
-
-// ── BOOKMARKS PAGE ──
-function loadBookmarksPage() {
-  const c = document.getElementById('bookmarks-container');
-  if (!currentUser) { c.innerHTML = '<div class="empty">Sign in with GitHub to save articles 📌</div>'; return; }
-  const key = `bookmarks_${currentUser.id}_data`;
-  const bms = JSON.parse(localStorage.getItem(key) || '[]').filter(b => userBookmarks.has(b.id));
-  if (bms.length === 0) { c.innerHTML = '<div class="empty">No saved articles yet. Bookmark guides and HN stories!</div>'; return; }
-  c.innerHTML = bms.map(b => `
-    <div class="guide-card">
-      <div class="guide-top">
-        <span class="guide-tag">Saved</span>
-        <button class="btn-icon bookmarked" onclick="toggleBookmark('${b.id}','${(b.title||'').replace(/'/g,"\\'")}');loadBookmarksPage()">🔖 Remove</button>
-      </div>
-      <div class="guide-title">${b.title}</div>
-      <div class="guide-meta"><span>${new Date(b.savedAt).toLocaleDateString()}</span></div>
-    </div>`).join('');
-}
-
-// ── PROFILE PAGE ──
-function loadProfilePage() {
-  const c = document.getElementById('profile-container');
-  if (!currentUser) { c.innerHTML = '<div class="empty">Sign in with GitHub to see your profile 👤</div>'; return; }
-  const key = `streak_${currentUser.id}`;
-  const streak = JSON.parse(localStorage.getItem(key) || '{"count":0}');
-  const readKey = `read_${currentUser.id}`;
-  const readCount = JSON.parse(localStorage.getItem(readKey) || '[]').length;
-  const bmKey = `bookmarks_${currentUser.id}`;
-  const bmCount = JSON.parse(localStorage.getItem(bmKey) || '[]').length;
-  const username = currentUser.user_metadata?.user_name || currentUser.email;
-  const avatar = currentUser.user_metadata?.avatar_url;
-  const badgeUrl = `https://stillnotathing.com/badge/${username}`;
-
-  c.innerHTML = `
-    <div class="profile-card">
-      <div class="profile-header">
-        ${avatar?`<img class="profile-avatar" src="${avatar}" alt="">`:''}
-        <div>
-          <div class="profile-name">${currentUser.user_metadata?.full_name || username}</div>
-          <div class="profile-handle">@${username}</div>
-        </div>
-      </div>
-      <div class="profile-stats">
-        <div class="profile-stat"><div class="profile-stat-num">🔥 ${streak.count}</div><div class="profile-stat-label">day streak</div></div>
-        <div class="profile-stat"><div class="profile-stat-num">${readCount}</div><div class="profile-stat-label">articles read</div></div>
-        <div class="profile-stat"><div class="profile-stat-num">${bmCount}</div><div class="profile-stat-label">bookmarked</div></div>
-      </div>
-    </div>
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="font-size:.82rem;font-weight:700;margin-bottom:10px">🎖️ Achievements & Stats</div>
-      <button onclick="showStackCard()" style="width:100%;background:var(--surface);border:1px solid rgba(0,212,170,.3);color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;font-size:.82rem;margin-bottom:8px">📛 My Stack Card →</button>
-      <button onclick="showLeaderboard()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;font-size:.82rem">View My Stats & Achievements →</button>
-    </div>
-    <div class="badge-section">
-      <div class="badge-title">📛 Your Stack Badge</div>
-      <div class="badge-code">[![StillNotAThing](${badgeUrl}.svg)](https://stillnotathing.com)</div>
-      <button class="btn-icon" onclick="navigator.clipboard.writeText('[![StillNotAThing](${badgeUrl}.svg)](https://stillnotathing.com)');toast('Badge copied! Paste in GitHub README')">Copy badge code</button>
-    </div>`;
-}
-
-// ── SUBMIT TOOL ──
-async function submitTool() {
-  if (!currentUser) { toast('Sign in to submit a tool'); return; }
-  const name = document.getElementById('submit-name').value.trim();
-  const category = document.getElementById('submit-category').value;
-  const url = document.getElementById('submit-url').value.trim();
-  const desc = document.getElementById('submit-desc').value.trim();
-  if (!name || !url) { toast('Fill in all required fields'); return; }
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/tool_submissions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ name, category, url, description: desc, submitted_by: currentUser.email })
-    });
-  } catch(e) {}
-  toast('🎉 Tool submitted! We\'ll review it soon.');
-  document.getElementById('submit-name').value = '';
-  document.getElementById('submit-url').value = '';
-  document.getElementById('submit-desc').value = '';
-}
-
-// ── INIT ──
-async function init() {
-  // Auth state
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    currentUser = session.user;
-    updateAuthUI();
-    const key = `read_${currentUser.id}`;
-    userReadHistory = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
-    const vkey = `votes_${currentUser.id}`;
-    userVotes = JSON.parse(localStorage.getItem(vkey) || '{}');
-    await loadUserBookmarks();
-    checkStreak();
+  if (allTools.length) {
+    renderToolCards(tc, allTools);
+  } else {
+    loadTools().then(function(tools) { renderToolCards(tc, tools); });
   }
 
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (session?.user) {
-      currentUser = session.user;
-      updateAuthUI();
-      const key = `read_${currentUser.id}`;
-      userReadHistory = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
-      await loadUserBookmarks();
-      checkStreak();
-      checkAchievements(session.user.id);
-      toast(`Welcome, ${session.user.user_metadata?.name || 'developer'}! 👋`);
-      setTimeout(showOnboarding, 1000);
+  loadHN(10).then(function(stories) {
+    if (!stories.length) { hnc.innerHTML = '<div class="empty">Could not load HN stories.</div>'; return; }
+    hnc.innerHTML = stories.map(function(s) {
+      return '<div class="hn-item" onclick="window.open(\'https://news.ycombinator.com/item?id=' + s.objectID + '\',\'_blank\')">' +
+        '<div class="hn-title">' + (s.title || '') + '</div>' +
+        '<div class="hn-meta">' +
+          '<span>⬆ ' + s.points + '</span>' +
+          '<span>💬 ' + s.num_comments + '</span>' +
+          '<span>' + timeAgo(s.created_at) + '</span>' +
+          (s.url ? '<a href="' + s.url + '" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none">visit →</a>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  });
+}
+
+function renderToolCards(c, tools) {
+  if (!tools.length) { c.innerHTML = '<div class="empty">No tool data.</div>'; return; }
+  var avg = (tools.reduce(function(a,t) { return a + (t.happiness||0); }, 0) / tools.length).toFixed(1);
+  document.getElementById('stat-happiness').textContent = avg;
+  c.innerHTML = tools.map(function(t) {
+    var trendIcon = t.trend === 'up' ? '<span style="color:var(--up)">↑</span>' : t.trend === 'down' ? '<span style="color:var(--down)">↓</span>' : '<span style="color:var(--muted)">→</span>';
+    return '<div class="tool-card">' +
+      '<div class="tool-header">' +
+        '<div class="tool-icon">' + (t.emoji||'🔧') + '</div>' +
+        '<div style="flex:1"><div class="tool-name">' + trendIcon + ' ' + t.name + '</div><div class="tool-cat">' + (t.category||'') + (t.website_url ? ' · <a href="' + t.website_url + '" target="_blank" style="color:var(--accent);text-decoration:none">visit →</a>' : '') + '</div></div>' +
+      '</div>' +
+      '<div class="score-row">' +
+        '<div class="score-item"><div class="score-num" style="color:var(--up)">' + (t.happiness||0) + '</div><div class="score-label">happy</div></div>' +
+        '<div class="score-item"><div class="score-num" style="color:var(--down)">' + (t.rage||0) + '</div><div class="score-label">rage</div></div>' +
+        '<div class="score-item"><div class="score-num" style="color:var(--accent)">' + (t.dx||0) + '</div><div class="score-label">DX</div></div>' +
+        '<div class="score-item"><div class="score-num" style="color:var(--muted)">' + (t.price||0) + '</div><div class="score-label">price</div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// MINE TAB
+// ════════════════════════════════════════
+function renderMineTab() {
+  var c = document.getElementById('mine-container');
+  if (!c) return;
+
+  var myStack = getMyStack();
+  var stackTools = STACK_TOOLS.filter(function(t) { return myStack.indexOf(t.id) !== -1; });
+  var reads = [];
+  var bookmarkIds = [];
+  try { reads = JSON.parse(localStorage.getItem('reads_' + (currentUser ? currentUser.id : '')) || '[]'); } catch(e) {}
+  try { bookmarkIds = JSON.parse(localStorage.getItem('bookmarks_' + (currentUser ? currentUser.id : '')) || '[]'); } catch(e) {}
+  var earned = currentUser ? checkAchievements(currentUser.id) : [];
+
+  var profileHTML = '';
+  if (currentUser) {
+    var av = currentUser.user_metadata && currentUser.user_metadata.avatar_url ? currentUser.user_metadata.avatar_url : '';
+    var uname = currentUser.user_metadata && currentUser.user_metadata.user_name ? currentUser.user_metadata.user_name : 'dev';
+    profileHTML = '<div class="card" style="margin-bottom:12px">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
+        (av ? '<img src="' + av + '" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--accent)" onerror="this.style.display=\'none\'">' : '') +
+        '<div><div style="font-weight:700;font-size:.95rem">@' + uname + '</div><div style="font-size:.7rem;color:var(--muted)">Indie Hacker</div></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:12px">' +
+        '<div class="profile-stat"><div class="profile-stat-num" style="color:var(--warn)">🔥' + userStreak + '</div><div class="profile-stat-label">streak</div></div>' +
+        '<div class="profile-stat"><div class="profile-stat-num" style="color:var(--accent)">' + reads.length + '</div><div class="profile-stat-label">reads</div></div>' +
+        '<div class="profile-stat"><div class="profile-stat-num" style="color:var(--accent2)">' + myStack.length + '</div><div class="profile-stat-label">stack</div></div>' +
+      '</div>' +
+      (stackTools.length ? '<div style="margin-bottom:12px"><div style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace;margin-bottom:6px">MY STACK</div><div style="display:flex;flex-wrap:wrap;gap:5px">' +
+        stackTools.map(function(t) { return '<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.72rem">' + t.emoji + ' ' + t.name + '</span>'; }).join('') +
+      '</div></div>' : '') +
+      '<div style="display:flex;gap:7px">' +
+        '<button class="btn btn-primary" onclick="showStackCard()" style="flex:1;font-size:.78rem">📛 Stack Card</button>' +
+        '<button class="btn btn-secondary" onclick="showOnboarding(true)" style="font-size:.78rem">✏️ Edit</button>' +
+        '<button class="btn btn-secondary" onclick="logout()" style="font-size:.78rem">Sign out</button>' +
+      '</div>' +
+    '</div>';
+  } else {
+    profileHTML = '<div class="card" style="text-align:center;margin-bottom:12px">' +
+      '<div style="font-size:1.8rem;margin-bottom:8px">👤</div>' +
+      '<div style="font-weight:700;margin-bottom:4px">Track your progress</div>' +
+      '<div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Sign in to save bookmarks, track streak, and personalize your feed</div>' +
+      '<button class="btn btn-primary" onclick="loginWithGitHub()" style="width:100%">Sign in with GitHub</button>' +
+    '</div>';
+  }
+
+  var achievementsHTML = '';
+  if (earned.length) {
+    achievementsHTML = '<div class="card" style="margin-bottom:12px">' +
+      '<div style="font-size:.7rem;font-weight:700;margin-bottom:8px">🎖️ Achievements</div>' +
+      '<div style="display:flex;flex-wrap:wrap">' +
+        earned.map(function(id) {
+          var a = ACHIEVEMENTS.filter(function(x) { return x.id === id; })[0];
+          return a ? '<div class="achievement-badge"><span>' + a.icon + '</span><div><div style="font-size:.72rem;font-weight:600">' + a.title + '</div><div style="font-size:.6rem;color:var(--muted)">' + a.desc + '</div></div></div>' : '';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  // Bookmarks
+  var bookmarksHTML = '<div class="card" style="margin-bottom:12px"><div style="font-size:.7rem;font-weight:700;margin-bottom:8px">🔖 Saved Guides</div><div id="bookmarks-inner"><div class="skel" style="height:48px"></div></div></div>';
+
+  // Newsletter
+  var newsletterHTML = '<div class="newsletter-box">' +
+    '<div style="font-size:.88rem;font-weight:700;margin-bottom:4px">📬 Weekly Digest</div>' +
+    '<div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Most rageful tools, top guides, indie hacker wins — every week</div>' +
+    '<input class="newsletter-input" id="nl-email" placeholder="your@email.com" type="email">' +
+    '<button class="btn btn-primary" onclick="subscribeNewsletter()" style="width:100%">Subscribe →</button>' +
+  '</div>';
+
+  c.innerHTML = profileHTML + achievementsHTML + bookmarksHTML + newsletterHTML;
+
+  // Load bookmarks async
+  if (currentUser && bookmarkIds.length) {
+    var ids = bookmarkIds.map(function(b) { return b.replace('guide_',''); }).filter(function(b) { return b.length > 10; });
+    if (ids.length) {
+      sb.from('guides').select('id,title,read_time').in('id', ids)
+      .then(function(res) {
+        var data = res.data || [];
+        var inner = document.getElementById('bookmarks-inner');
+        if (inner) {
+          inner.innerHTML = data.map(function(g) {
+            return '<div onclick="openGuide(\'' + g.id + '\')" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">' +
+              '<div style="font-size:.82rem;font-weight:600">' + g.title + '</div>' +
+              '<div style="font-size:.68rem;color:var(--muted)">' + (g.read_time||'5 min') + ' read →</div>' +
+            '</div>';
+          }).join('') || '<div style="color:var(--muted);font-size:.78rem">No saved guides yet.</div>';
+        }
+      });
     } else {
-      currentUser = null;
-      updateAuthUI();
+      var inner = document.getElementById('bookmarks-inner');
+      if (inner) inner.innerHTML = '<div style="color:var(--muted);font-size:.78rem">No saved guides yet.</div>';
     }
+  } else {
+    var inner = document.getElementById('bookmarks-inner');
+    if (inner) inner.innerHTML = '<div style="color:var(--muted);font-size:.78rem">' + (currentUser ? 'No saved guides yet.' : 'Sign in to save guides.') + '</div>';
+  }
+}
+
+// ════════════════════════════════════════
+// GUIDE DETAIL
+// ════════════════════════════════════════
+function openGuide(id) {
+  sb.from('guides').select('*').eq('id', id).single().then(function(res) {
+    var data = res.data;
+    if (!data) return;
+
+    // Mark as read
+    if (currentUser) {
+      var key = 'reads_' + currentUser.id;
+      try {
+        var reads = JSON.parse(localStorage.getItem(key) || '[]');
+        if (reads.indexOf(id) === -1) reads.push(id);
+        localStorage.setItem(key, JSON.stringify(reads));
+        checkAchievements(currentUser.id);
+      } catch(e) {}
+    }
+
+    // Related guides
+    sb.from('guides').select('id,title,description,read_time').eq('category', data.category).neq('id', id).order('created_at', {ascending:false}).limit(3)
+    .then(function(res2) {
+      showGuideOverlay(data, res2.data || []);
+    });
   });
 
-  showPushBanner();
-  showNewsletter();
-  await loadHome();
+  history.pushState({}, '', '/?guide=' + id);
 }
 
-init();
+function showGuideOverlay(data, related) {
+  var existing = document.getElementById('guide-overlay');
+  if (existing) existing.remove();
 
+  var overlay = document.createElement('div');
+  overlay.id = 'guide-overlay';
+  overlay.className = 'guide-overlay';
 
+  var isBookmarked = userBookmarks.indexOf('guide_' + data.id) !== -1;
+  var tagsHTML = (data.tags || []).map(function(tag) {
+    return '<span class="tag" style="background:var(--surface);border:1px solid var(--border);color:var(--muted)">#' + tag + '</span>';
+  }).join('');
 
-window.initGiscus = function() {
-  const el = document.getElementById('giscus-container');
-  if (!el) return;
-  const script = document.createElement('script');
-  script.src = 'https://giscus.app/client.js';
-  script.setAttribute('data-repo', 'jammiejammmie/stillnotathing-dev');
-  script.setAttribute('data-repo-id', 'R_kgDOO...');
-  script.setAttribute('data-category', 'General');
-  script.setAttribute('data-category-id', 'DIC_kwDOO...');
-  script.setAttribute('data-mapping', 'pathname');
-  script.setAttribute('data-strict', '0');
-  script.setAttribute('data-reactions-enabled', '1');
-  script.setAttribute('data-emit-metadata', '0');
-  script.setAttribute('data-input-position', 'bottom');
-  script.setAttribute('data-theme', 'dark');
-  script.setAttribute('data-lang', 'en');
-  script.crossOrigin = 'anonymous';
-  script.async = true;
-  el.appendChild(script);
-};
+  var relatedHTML = related.map(function(r) {
+    return '<div onclick="closeGuide();setTimeout(function(){openGuide(\'' + r.id + '\')},100)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer">' +
+      '<div style="font-size:.8rem;font-weight:600;margin-bottom:2px">' + r.title + '</div>' +
+      '<div style="font-size:.68rem;color:var(--muted)">' + (r.read_time||'5 min') + ' read →</div>' +
+    '</div>';
+  }).join('');
 
+  overlay.innerHTML = '<div class="guide-overlay-inner">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">' +
+      '<button onclick="closeGuide()" class="btn btn-secondary" style="font-size:.75rem">← Back</button>' +
+      '<div style="display:flex;gap:7px">' +
+        '<button onclick="toggleBookmark(\'' + data.id + '\')" class="btn btn-secondary" id="bookmark-btn-' + data.id + '" style="font-size:.75rem">' + (isBookmarked ? '🔖 Saved' : '🔖 Save') + '</button>' +
+        '<button onclick="shareGuide(\'' + data.id + '\',\'' + escAttr(data.title) + '\')" class="btn btn-secondary" style="font-size:.75rem">↗ Share</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">' +
+      '<span class="tag" style="background:rgba(124,92,252,.08);color:var(--accent2)">' + (data.category||'guide') + '</span>' +
+      '<span style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted)">' + (data.read_time||'5 min read') + '</span>' +
+    '</div>' +
+    '<h1 style="font-size:1.3rem;font-weight:700;letter-spacing:-.5px;line-height:1.3;margin-bottom:8px">' + data.title + '</h1>' +
+    '<p style="font-size:.85rem;color:var(--muted);line-height:1.5;margin-bottom:16px">' + (data.description||'') + '</p>' +
+    (tagsHTML ? '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px">' + tagsHTML + '</div>' : '') +
+    '<div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:20px;font-size:.85rem;line-height:1.75;color:var(--muted)">' + mdToHTML(data.content || '') + '</div>' +
+    (related.length ? '<div style="margin-bottom:16px"><div style="font-family:JetBrains Mono,monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Related Guides</div>' + relatedHTML + '</div>' : '') +
+    '<div style="background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:10px;padding:12px;margin-bottom:16px">' +
+      '<div style="font-size:.8rem;font-weight:700;margin-bottom:4px">💰 Calculate your stack cost</div>' +
+      '<a href="/calc.html" style="background:var(--accent);color:#000;padding:6px 14px;border-radius:6px;font-size:.75rem;font-weight:700;text-decoration:none;display:inline-block">Try Stack Calculator →</a>' +
+    '</div>' +
+    '<div style="text-align:center;padding-top:12px;border-top:1px solid var(--border)">' +
+      '<button onclick="shareGuide(\'' + data.id + '\',\'' + escAttr(data.title) + '\')" class="btn btn-primary" style="font-size:.8rem">↗ Share this guide</button>' +
+    '</div>' +
+  '</div>';
 
-
-// ── DYNAMIC OG TAGS ──
-function updateOGTags(title, description, imageType, imageParams) {
-  const base = 'https://stillnotathing.com';
-  const imgUrl = `${base}/.netlify/functions/og-image?type=${imageType}${imageParams||''}`;
-  
-  document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
-  document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
-  document.querySelector('meta[property="og:image"]')?.setAttribute('content', imgUrl);
-  document.querySelector('meta[name="twitter:card"]')?.setAttribute('content', 'summary_large_image');
-  
-  // Add twitter image meta if not exists
-  if (!document.querySelector('meta[name="twitter:image"]')) {
-    const meta = document.createElement('meta');
-    meta.name = 'twitter:image';
-    meta.content = imgUrl;
-    document.head.appendChild(meta);
-  } else {
-    document.querySelector('meta[name="twitter:image"]').setAttribute('content', imgUrl);
-  }
+  document.body.appendChild(overlay);
+  overlay.scrollTop = 0;
 }
 
-// 가이드 상세 열릴 때 OG 업데이트
-const _origOpenGuide = window.openGuide;
-window.openGuide = async function(id) {
-  if (_origOpenGuide) {
-    await _origOpenGuide(id);
-    // 가이드 OG 태그 업데이트
-    setTimeout(async function() {
-      try {
-        const { data } = await sb.from('guides').select('title,description').eq('id', id).single();
-        if (data) {
-          const encodedTitle = encodeURIComponent((data.title||'').slice(0,80));
-          const imgUrl = 'https://stillnotathing.com/.netlify/functions/og-image?type=guide&title=' + encodedTitle;
-          document.querySelector('meta[property="og:title"]').setAttribute('content', data.title + ' — StillNotAThing');
-          document.querySelector('meta[property="og:description"]').setAttribute('content', data.description || '');
-          document.querySelector('meta[property="og:image"]').setAttribute('content', imgUrl);
-          document.querySelector('meta[name="twitter:image"]') && document.querySelector('meta[name="twitter:image"]').setAttribute('content', imgUrl);
-          history.replaceState({}, '', '/?guide=' + id);
-        }
-      } catch(e) {}
-    }, 300);
-  }
-};
+function closeGuide() {
+  var overlay = document.getElementById('guide-overlay');
+  if (overlay) overlay.remove();
+  history.pushState({}, '', '/');
+}
 
-// ── CLIPBOARD "via stillnotathing" ──
-document.addEventListener('copy', function(e) {
-  const selection = window.getSelection();
-  if (!selection || selection.toString().length < 20) return;
-  const original = selection.toString();
-  const modified = original + '\n\nvia stillnotathing.com';
-  e.clipboardData.setData('text/plain', modified);
-  e.preventDefault();
-});
+function mdToHTML(md) {
+  if (!md) return '';
+  return md
+    .replace(/^### (.*)/gm, '<h3 style="font-size:.95rem;font-weight:700;margin:16px 0 6px;color:var(--text)">$1</h3>')
+    .replace(/^## (.*)/gm, '<h2 style="font-size:1rem;font-weight:700;margin:18px 0 8px;color:var(--text)">$1</h2>')
+    .replace(/^# (.*)/gm, '<h1 style="font-size:1.1rem;font-weight:700;margin:18px 0 8px;color:var(--text)">$1</h1>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
+    .replace(/`([^`\n]+)`/g, '<code style="background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-family:JetBrains Mono,monospace;font-size:.8em;color:var(--accent)">$1</code>')
+    .replace(/```[\w]*\n([\s\S]*?)```/g, '<pre style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;margin:10px 0"><code style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:var(--text);white-space:pre">$1</code></pre>')
+    .replace(/^- (.*)/gm, '<li style="padding:3px 0;color:var(--muted)">$1</li>')
+    .replace(/\n\n/g, '</p><p style="margin:8px 0">');
+}
 
-// ── SHARE FUNCTIONS WITH OG ──
-function shareWithOG(type, title, description, url, imageParams) {
-  updateOGTags(title, description, type, imageParams);
-  const shareUrl = url || 'https://stillnotathing.com';
+// ════════════════════════════════════════
+// BOOKMARK & VOTE
+// ════════════════════════════════════════
+function toggleBookmark(guideId) {
+  if (!currentUser) { toast('Sign in to save guides'); return; }
+  var key = 'bookmarks_' + currentUser.id;
+  try {
+    var bms = JSON.parse(localStorage.getItem(key) || '[]');
+    var itemKey = 'guide_' + guideId;
+    var idx = bms.indexOf(itemKey);
+    if (idx === -1) {
+      bms.push(itemKey);
+      userBookmarks = bms;
+      toast('Saved! 🔖');
+      var btn = document.getElementById('bookmark-btn-' + guideId);
+      if (btn) btn.textContent = '🔖 Saved';
+    } else {
+      bms.splice(idx, 1);
+      userBookmarks = bms;
+      toast('Removed from saved');
+      var btn = document.getElementById('bookmark-btn-' + guideId);
+      if (btn) btn.textContent = '🔖 Save';
+    }
+    localStorage.setItem(key, JSON.stringify(bms));
+    checkAchievements(currentUser.id);
+  } catch(e) {}
+}
+
+function shareGuide(id, title) {
+  var url = 'https://stillnotathing.com/?guide=' + id;
   if (navigator.share) {
-    navigator.share({ title, text: description, url: shareUrl });
+    navigator.share({ title: title, url: url });
   } else {
-    navigator.clipboard.writeText(shareUrl);
+    navigator.clipboard.writeText(url);
     toast('Link copied! ✓');
   }
 }
 
-function sharePainRadar() {
-  shareWithOG(
-    'pain',
-    '🔥 Developer Pain Radar — StillNotAThing',
-    'See what developers are raging about today. Daily sentiment tracker for indie hackers.',
-    'https://stillnotathing.com',
-    ''
-  );
-}
+// ════════════════════════════════════════
+// PAIN DETAIL OVERLAY
+// ════════════════════════════════════════
+function showPainDetail(toolName, rage, rageNote) {
+  var existing = document.getElementById('pain-overlay');
+  if (existing) existing.remove();
 
-function shareOpportunityWithOG(pain, opportunity) {
-  const encodedTitle = encodeURIComponent(pain.slice(0, 60));
-  shareWithOG(
-    'opportunity',
-    '💡 Developer Opportunity — StillNotAThing',
-    `Pain: "${pain}" — See the opportunity this creates.`,
-    'https://stillnotathing.com',
-    `&title=${encodedTitle}`
-  );
-}
-
-
-// ── PAIN RADAR ──
-function renderPainRadar(tools) {
-  const c = document.getElementById('pain-radar-container');
-  if (!c) return;
-  const sorted = [...tools].sort((a, b) => b.rage - a.rage).slice(0, 5);
-  c.innerHTML = sorted.map((t, i) => {
-    const rageColor = t.rage >= 7 ? 'var(--down)' : t.rage >= 5 ? 'var(--warn)' : 'var(--muted)';
-    const rageEmoji = t.rage >= 7 ? '🚨' : t.rage >= 5 ? '⚠️' : '😤';
-    return `
-      <div onclick="showPainDetail('${t.name}',${t.rage},'${(t.rage_note||'')}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--down)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);width:16px">#${i+1}</div>
-        <div style="font-size:.9rem">${t.emoji||'🔧'}</div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:.85rem">${t.name}</div>
-          ${t.rage_note ? `<div style="font-size:.72rem;color:${rageColor};margin-top:2px">${rageEmoji} ${t.rage_note}</div>` : ''}
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:JetBrains Mono,monospace;font-size:1.1rem;font-weight:700;color:${rageColor}">${t.rage}</div>
-          <div style="font-size:.6rem;color:var(--muted)">rage</div>
-        </div>
-        <div style="width:50px">
-          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-            <div style="height:100%;width:${t.rage*10}%;background:${rageColor};border-radius:2px"></div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ── TOOL MOMENTUM ──
-function renderMomentum(tools) {
-  const c = document.getElementById('momentum-container');
-  if (!c) return;
-  const rising = tools.filter(t => t.trend === 'up').slice(0, 3);
-  const falling = tools.filter(t => t.trend === 'down').slice(0, 2);
-  c.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:12px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--up);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">↑ Rising Fast</div>
-        ${rising.map(t => `
-          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(34,197,94,.08)">
-            <span>${t.emoji||'🔧'}</span>
-            <span style="font-size:.82rem;font-weight:600;flex:1">${t.name}</span>
-            <span style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:var(--up)">${t.happiness}/10</span>
-          </div>`).join('')}
-      </div>
-      <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:12px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--down);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">↓ Losing Ground</div>
-        ${falling.map(t => `
-          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(239,68,68,.08)">
-            <span>${t.emoji||'🔧'}</span>
-            <span style="font-size:.82rem;font-weight:600;flex:1">${t.name}</span>
-            <span style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:var(--down)">${t.happiness}/10</span>
-          </div>`).join('')}
-        ${falling.length === 0 ? '<div style="font-size:.75rem;color:var(--muted)">All tools stable</div>' : ''}
-      </div>
-    </div>`;
-}
-
-// ── OPPORTUNITY FEED ──
-async function renderOpportunityFeed(tools) {
-  const c = document.getElementById('opportunity-container');
-  if (!c) return;
-  try {
-    const { data } = await sb.from('opportunities').select('*').order('collected_at', { ascending: false }).limit(5);
-    if (data && data.length > 0) {
-      c.innerHTML = data.map(o => `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
-            <div style="font-size:.85rem;font-weight:700;line-height:1.3;color:var(--text)">😤 "${o.pain}"</div>
-            <span style="background:${o.potential==='HIGH'?'rgba(34,197,94,.1)':'rgba(245,158,11,.1)'};color:${o.potential==='HIGH'?'var(--up)':'var(--warn)'};padding:2px 8px;border-radius:4px;font-size:.62rem;font-family:JetBrains Mono,monospace;flex-shrink:0">${o.potential}</span>
-          </div>
-          <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">${o.signal||''}</div>
-          <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">
-            💡 Opportunity: ${o.opportunity}
-          </div>
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-            ${(o.tags||[]).map(tag => `<span style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:2px 7px;border-radius:3px;font-size:.62rem;font-family:JetBrains Mono,monospace">#${tag}</span>`).join('')}
-          </div>
-        </div>`).join('');
-    } else {
-      const rageTools = tools.filter(t => t.rage >= 5).sort((a,b) => b.rage - a.rage).slice(0,3);
-      if (rageTools.length > 0) {
-        c.innerHTML = '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:var(--muted);margin-bottom:10px">Based on community rage scores · Full analysis collected daily</div>' +
-          rageTools.map(t => `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:.85rem;font-weight:700;margin-bottom:6px;color:var(--text)">😤 "${t.name} frustration is growing"</div><div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono,monospace">↑ Rage ${t.rage}/10 · ${t.rage_note||'Community complaints rising'}</div><div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.1);border-radius:6px;padding:8px;font-size:.78rem;color:var(--accent)">💡 Opportunity: Better alternative or wrapper for ${t.name}</div></div>`).join('');
-      } else {
-        c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Opportunity analysis collected daily. Check back tomorrow!</div>';
-      }
-    }
-  } catch(e) {
-    c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Could not load opportunities.</div>';
-  }
-}
-
-// ── ACHIEVEMENTS ──
-const ACHIEVEMENTS = [
-  { id: 'first_vote', icon: '🗳️', title: 'First Vote', desc: 'Voted on a tool for the first time' },
-  { id: 'first_bookmark', icon: '🔖', title: 'Bookmarker', desc: 'Saved your first article' },
-  { id: 'streak_3', icon: '🔥', title: '3-Day Streak', desc: 'Visited 3 days in a row' },
-  { id: 'streak_7', icon: '⚡', title: 'Week Warrior', desc: 'Visited 7 days in a row' },
-  { id: 'streak_30', icon: '🏆', title: 'Month Master', desc: '30-day streak achieved' },
-  { id: 'read_5', icon: '📚', title: 'Avid Reader', desc: 'Read 5 articles' },
-  { id: 'read_20', icon: '🧠', title: 'Knowledge Seeker', desc: 'Read 20 articles' },
-  { id: 'subscriber', icon: '📬', title: 'Subscriber', desc: 'Subscribed to the newsletter' }
-];
-
-function checkAchievements(userId) {
-  if (!userId) return;
-  const key = `achievements_${userId}`;
-  const earned = JSON.parse(localStorage.getItem(key) || '[]');
-  const streak = JSON.parse(localStorage.getItem(`streak_${userId}`) || '{"count":0}');
-  const reads = JSON.parse(localStorage.getItem(`read_${userId}`) || '[]').length;
-  const bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${userId}`) || '[]').length;
-  const votes = Object.keys(JSON.parse(localStorage.getItem(`votes_${userId}`) || '{}')).length;
-
-  const newEarned = [];
-  if (votes >= 1 && !earned.includes('first_vote')) newEarned.push('first_vote');
-  if (bookmarks >= 1 && !earned.includes('first_bookmark')) newEarned.push('first_bookmark');
-  if (streak.count >= 3 && !earned.includes('streak_3')) newEarned.push('streak_3');
-  if (streak.count >= 7 && !earned.includes('streak_7')) newEarned.push('streak_7');
-  if (streak.count >= 30 && !earned.includes('streak_30')) newEarned.push('streak_30');
-  if (reads >= 5 && !earned.includes('read_5')) newEarned.push('read_5');
-  if (reads >= 20 && !earned.includes('read_20')) newEarned.push('read_20');
-
-  newEarned.forEach(id => {
-    earned.push(id);
-    const a = ACHIEVEMENTS.find(a => a.id === id);
-    if (a) {
-      setTimeout(() => {
-        toast(`${a.icon} Achievement unlocked: ${a.title}!`, 4000);
-      }, 1000);
-    }
-  });
-
-  localStorage.setItem(key, JSON.stringify(earned));
-  return earned;
-}
-
-// ── PAIN RADAR DETAIL ──
-async function showPainDetail(toolName, rage, rageNote) {
-  const overlay = document.createElement('div');
+  var overlay = document.createElement('div');
+  overlay.className = 'overlay';
   overlay.id = 'pain-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:flex;align-items:flex-end;justify-content:center;';
-  
-  // 관련 가이드 찾기
-  let relatedGuides = [];
-  try {
-    const { data } = await sb.from('guides')
-      .select('id,title,description,read_time')
-      .ilike('title', `%${toolName}%`)
-      .order('created_at', { ascending: false })
-      .limit(3);
-    relatedGuides = data || [];
-  } catch(e) {}
 
-  // 대안 툴
-  const alternatives = {
-    'PlanetScale': ['Supabase', 'Neon', 'Railway Postgres'],
-    'Vercel': ['Netlify', 'Railway', 'Cloudflare Pages'],
-    'Netlify': ['Vercel', 'Railway', 'Cloudflare Pages'],
-    'Stripe': ['Paddle', 'LemonSqueezy'],
-    'Heroku': ['Railway', 'Render', 'Fly.io']
-  };
-  const alts = alternatives[toolName] || [];
+  var alts = ALT_TOOLS[toolName] || [];
+  var altsHTML = alts.length ? '<div style="margin-bottom:14px"><div style="font-family:JetBrains Mono,monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">💡 Alternatives developers are switching to</div><div style="display:flex;flex-wrap:wrap;gap:6px">' +
+    alts.map(function(a) { return '<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:4px 10px;border-radius:6px;font-size:.78rem">' + a + '</span>'; }).join('') +
+  '</div></div>' : '';
 
-  overlay.innerHTML = `
-    <div style="background:var(--card);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px;max-width:700px;width:100%;max-height:80vh;overflow-y:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-size:1.1rem;font-weight:700;color:var(--down)">🔥 Why devs are angry at ${toolName}</div>
-          <div style="font-family:JetBrains Mono,monospace;font-size:.7rem;color:var(--muted);margin-top:3px">Rage score: ${rage}/10</div>
-        </div>
-        <button onclick="document.getElementById('pain-overlay').remove()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif">✕</button>
-      </div>
+  var rageColor = rage >= 7 ? 'var(--down)' : rage >= 5 ? 'var(--warn)' : 'var(--muted)';
 
-      ${rageNote ? `
-      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px;margin-bottom:16px">
-        <div style="font-size:.85rem;font-weight:600;color:var(--down);margin-bottom:4px">🚨 Community Signal</div>
-        <div style="font-size:.82rem;color:var(--muted)">${rageNote}</div>
-      </div>` : ''}
-
-      ${alts.length > 0 ? `
-      <div style="margin-bottom:16px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">💡 Alternatives developers are switching to</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${alts.map(a => `<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.2);color:var(--accent);padding:5px 12px;border-radius:6px;font-size:.78rem;font-weight:500">${a}</span>`).join('')}
-        </div>
-      </div>` : ''}
-
-      ${relatedGuides.length > 0 ? `
-      <div>
-        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">📖 Related guides on StillNotAThing</div>
-        ${relatedGuides.map(g => `
-          <div onclick="document.getElementById('pain-overlay').remove();openGuide('${g.id}')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer">
-            <div style="font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:3px">${g.title}</div>
-            <div style="font-size:.72rem;color:var(--muted)">${g.read_time||'5 min'} read →</div>
-          </div>`).join('')}
-      </div>` : `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;color:var(--muted);font-size:.78rem">
-        Guides about ${toolName} are being generated. Check back soon!
-      </div>`}
-
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px">
-        <button onclick="showPage('tools');document.getElementById('pain-overlay').remove()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">See full scores →</button>
-        <button onclick="navigator.share?navigator.share({title:'${toolName} rage at ${rage}/10',url:'https://stillnotathing.com'}):navigator.clipboard.writeText('https://stillnotathing.com')" style="background:var(--accent);border:none;color:#000;padding:8px 16px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:700">↗ Share</button>
-      </div>
-    </div>`;
+  overlay.innerHTML = '<div class="overlay-card">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<div>' +
+        '<div style="font-size:1rem;font-weight:700;color:' + rageColor + '">🔥 Why devs are angry at ' + toolName + '</div>' +
+        '<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);margin-top:2px">Rage score: ' + rage + '/10</div>' +
+      '</div>' +
+      '<button onclick="closePainDetail()" class="btn btn-secondary" style="font-size:.75rem">✕</button>' +
+    '</div>' +
+    (rageNote ? '<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px;margin-bottom:14px"><div style="font-size:.8rem;font-weight:600;color:var(--down);margin-bottom:4px">🚨 Community Signal</div><div style="font-size:.8rem;color:var(--muted)">' + rageNote + '</div></div>' : '') +
+    altsHTML +
+    '<div id="pain-guides-container"><div class="skel" style="height:48px;margin-bottom:6px"></div><div class="skel" style="height:48px"></div></div>' +
+    '<div style="display:flex;gap:7px;margin-top:14px">' +
+      '<button onclick="closePainDetail();switchTab(\'explore\')" class="btn btn-secondary" style="flex:1;font-size:.75rem">See all tool scores →</button>' +
+      '<button onclick="navigator.share ? navigator.share({title:\'' + toolName + ' rage at ' + rage + '/10\',url:\'https://stillnotathing.com\'}) : navigator.clipboard.writeText(\'https://stillnotathing.com\')" class="btn btn-primary" style="font-size:.75rem">↗ Share</button>' +
+    '</div>' +
+  '</div>';
 
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closePainDetail(); });
+
+  // Load related guides
+  sb.from('guides').select('id,title,read_time').ilike('title', '%' + toolName + '%').order('created_at', {ascending:false}).limit(3)
+  .then(function(res) {
+    var pgc = document.getElementById('pain-guides-container');
+    if (!pgc) return;
+    var data = res.data || [];
+    if (!data.length) { pgc.innerHTML = '<div style="font-size:.78rem;color:var(--muted);text-align:center;padding:8px">No guides yet for ' + toolName + '. Check back soon!</div>'; return; }
+    pgc.innerHTML = '<div style="font-family:JetBrains Mono,monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">📖 Related guides</div>' +
+      data.map(function(g) {
+        return '<div onclick="closePainDetail();openGuide(\'' + g.id + '\')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px;margin-bottom:6px;cursor:pointer">' +
+          '<div style="font-size:.8rem;font-weight:600;margin-bottom:2px">' + g.title + '</div>' +
+          '<div style="font-size:.65rem;color:var(--muted)">' + (g.read_time||'5 min') + ' read →</div>' +
+        '</div>';
+      }).join('');
+  });
 }
 
-// ── LEADERBOARD ──
-function showLeaderboard() {
-  const overlay = document.createElement('div');
-  overlay.id = 'leaderboard-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:flex;align-items:center;justify-content:center;padding:20px;';
-  
-  // 로컬 데이터 기반 (실제로는 서버에서 가져와야 하지만 일단 로컬)
-  const myStreak = currentUser ? JSON.parse(localStorage.getItem(`streak_${currentUser.id}`) || '{"count":0}').count : 0;
-  const myReads = currentUser ? JSON.parse(localStorage.getItem(`read_${currentUser.id}`) || '[]').length : 0;
-
-  overlay.innerHTML = `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:400px;width:100%">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:1rem;font-weight:700">🏆 Your Stats</div>
-        <button onclick="document.getElementById('leaderboard-overlay').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
-      </div>
-      ${currentUser ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-family:JetBrains Mono,monospace;font-size:1.8rem;font-weight:700;color:var(--warn)">🔥${myStreak}</div>
-          <div style="font-size:.65rem;color:var(--muted)">day streak</div>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-family:JetBrains Mono,monospace;font-size:1.8rem;font-weight:700;color:var(--accent)">${myReads}</div>
-          <div style="font-size:.65rem;color:var(--muted)">articles read</div>
-        </div>
-      </div>
-      <div style="margin-bottom:16px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px">🎖️ Your Achievements</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${(checkAchievements(currentUser.id)||[]).map(id => {
-            const a = ACHIEVEMENTS.find(a => a.id === id);
-            return a ? `<span title="${a.desc}" style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);padding:4px 10px;border-radius:20px;font-size:.75rem">${a.icon} ${a.title}</span>` : '';
-          }).join('') || '<span style="color:var(--muted);font-size:.78rem">No achievements yet. Keep reading!</span>'}
-        </div>
-      </div>` : '<div style="text-align:center;color:var(--muted);padding:20px">Sign in with GitHub to track your stats!</div>'}
-      <button onclick="document.getElementById('leaderboard-overlay').remove()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif">Close</button>
-    </div>`;
-
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+function closePainDetail() {
+  var overlay = document.getElementById('pain-overlay');
+  if (overlay) overlay.remove();
 }
 
-
-// ── MY STACK (온보딩 + 맞춤 피드) ──
-const STACK_TOOLS = [
-  { id: 'vercel', name: 'Vercel', emoji: '⬡', cat: 'hosting' },
-  { id: 'netlify', name: 'Netlify', emoji: '🌐', cat: 'hosting' },
-  { id: 'railway', name: 'Railway', emoji: '🚂', cat: 'hosting' },
-  { id: 'supabase', name: 'Supabase', emoji: '🗄', cat: 'database' },
-  { id: 'planetscale', name: 'PlanetScale', emoji: '🪐', cat: 'database' },
-  { id: 'stripe', name: 'Stripe', emoji: '💳', cat: 'payments' },
-  { id: 'clerk', name: 'Clerk', emoji: '🔑', cat: 'auth' },
-  { id: 'resend', name: 'Resend', emoji: '📧', cat: 'email' },
-  { id: 'nextjs', name: 'Next.js', emoji: '▲', cat: 'framework' },
-  { id: 'react', name: 'React', emoji: '⚛️', cat: 'framework' },
-  { id: 'github', name: 'GitHub', emoji: '⚙', cat: 'devtools' },
-  { id: 'cursor', name: 'Cursor', emoji: '🖱️', cat: 'ai' },
-  { id: 'cloudflare', name: 'Cloudflare', emoji: '☁️', cat: 'infra' },
-  { id: 'aws', name: 'AWS', emoji: '🟧', cat: 'infra' }
-];
-
-function getMyStack() {
-  if (!currentUser) return [];
-  return JSON.parse(localStorage.getItem(`stack_${currentUser.id}`) || '[]');
-}
-
-function saveMyStack(stack) {
+// ════════════════════════════════════════
+// ONBOARDING
+// ════════════════════════════════════════
+function showOnboarding(force) {
   if (!currentUser) return;
-  localStorage.setItem(`stack_${currentUser.id}`, JSON.stringify(stack));
-}
-
-function showOnboarding() {
-  if (!currentUser) return;
-  const key = 'onboarded_' + currentUser.id;
-  if (localStorage.getItem(key)) return;
+  var key = 'onboarded_' + currentUser.id;
+  if (!force && localStorage.getItem(key)) return;
   if (document.getElementById('onboarding-overlay')) return;
 
-  const overlay = document.createElement('div');
+  var overlay = document.createElement('div');
   overlay.id = 'onboarding-overlay';
-  overlay.style.cssText = [
-    'position:fixed',
-    'top:0','left:0','right:0','bottom:0',
-    'background:rgba(0,0,0,.85)',
-    'z-index:9999',
-    'display:flex',
-    'align-items:center',
-    'justify-content:center',
-    'padding:16px',
-    'overflow-y:auto'
-  ].join(';');
+  overlay.className = 'onboarding-overlay';
 
-    var toolsHTML = STACK_TOOLS.map(function(t) {
-    var cls = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;';
-    var inner = '<span style="font-size:1.1rem">' + t.emoji + '</span><div><div style="font-size:.82rem;font-weight:600;color:var(--text)">' + t.name + '</div><div style="font-size:.6rem;color:var(--muted)">' + t.cat + '</div></div>';
-    return '<div id="stool_' + t.id + '" data-id="' + t.id + '" onclick="toggleStackTool(this.dataset.id,this)" style="' + cls + '">' + inner + '</div>';
+  var myStack = getMyStack();
+
+  var toolsHTML = STACK_TOOLS.map(function(t) {
+    var isSelected = myStack.indexOf(t.id) !== -1;
+    return '<div id="stool_' + t.id + '" class="stack-tool' + (isSelected ? ' selected' : '') + '" data-id="' + t.id + '" onclick="toggleStackTool(this)">' +
+      '<span style="font-size:1rem">' + t.emoji + '</span>' +
+      '<div>' +
+        '<div style="font-size:.8rem;font-weight:600;color:var(--text)">' + t.name + '</div>' +
+        '<div style="font-size:.58rem;color:var(--muted);font-family:JetBrains Mono,monospace">' + t.cat + '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 
-  overlay.innerHTML =
-    '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch">' +
-      '<div style="text-align:center;margin-bottom:16px">' +
-        '<div style="font-size:2rem;margin-bottom:6px">⚡</div>' +
-        '<div style="font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--text)">What\'s your stack?</div>' +
-        '<div style="font-size:.78rem;color:var(--muted)">Personalize your feed — select all that apply</div>' +
-      '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px">' + toolsHTML + '</div>' +
-      '<button onclick="finishOnboarding()" style="display:block;width:100%;background:var(--accent);border:none;color:#000;padding:13px;border-radius:9px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:8px;-webkit-tap-highlight-color:transparent">Save my stack →</button>' +
-      '<button onclick="skipOnboarding()" style="display:block;width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:9px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.8rem;-webkit-tap-highlight-color:transparent">Skip for now</button>' +
-    '</div>';
+  overlay.innerHTML = '<div class="onboarding-card">' +
+    '<div style="text-align:center;margin-bottom:16px">' +
+      '<div style="font-size:1.8rem;margin-bottom:6px">⚡</div>' +
+      '<div style="font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--text)">What\'s your stack?</div>' +
+      '<div style="font-size:.78rem;color:var(--muted)">Personalize your feed — select all that apply</div>' +
+    '</div>' +
+    '<div class="stack-grid">' + toolsHTML + '</div>' +
+    '<button onclick="finishOnboarding()" class="btn btn-primary" style="width:100%;margin-bottom:8px;font-size:.88rem;padding:12px">Save my stack →</button>' +
+    '<button onclick="skipOnboarding()" class="btn btn-secondary" style="width:100%;font-size:.8rem;padding:10px">Skip for now</button>' +
+  '</div>';
 
   document.body.appendChild(overlay);
 }
 
-function toggleStackTool(id, el) {
+function toggleStackTool(el) {
+  var id = el.getAttribute('data-id');
   var myStack = getMyStack();
   var idx = myStack.indexOf(id);
   if (idx === -1) {
     myStack.push(id);
-    el.style.background = 'rgba(0,212,170,.15)';
-    el.style.border = '1px solid var(--accent)';
+    el.classList.add('selected');
   } else {
     myStack.splice(idx, 1);
-    el.style.background = 'var(--surface)';
-    el.style.border = '1px solid var(--border)';
+    el.classList.remove('selected');
   }
   saveMyStack(myStack);
 }
@@ -1452,7 +1086,7 @@ function finishOnboarding() {
   localStorage.setItem('onboarded_' + currentUser.id, '1');
   var overlay = document.getElementById('onboarding-overlay');
   if (overlay) overlay.remove();
-  toast('Stack saved! 🎉');
+  toast('Stack saved! Feed personalized 🎉');
 }
 
 function skipOnboarding() {
@@ -1462,49 +1096,49 @@ function skipOnboarding() {
   if (overlay) overlay.remove();
 }
 
-// ── STACK CARD ──
+// ════════════════════════════════════════
+// STACK CARD
+// ════════════════════════════════════════
 function showStackCard() {
-  if (!currentUser) { toast('Sign in to create your stack card'); return; }
-  const myStack = getMyStack();
-  const username = currentUser.user_metadata?.user_name || 'developer';
-  const stackTools = STACK_TOOLS.filter(t => myStack.includes(t.id));
+  if (!currentUser) { toast('Sign in first'); return; }
+  var myStack = getMyStack();
+  var stackTools = STACK_TOOLS.filter(function(t) { return myStack.indexOf(t.id) !== -1; });
+  var uname = currentUser.user_metadata && currentUser.user_metadata.user_name ? currentUser.user_metadata.user_name : 'dev';
 
-  const overlay = document.createElement('div');
+  var overlay = document.createElement('div');
   overlay.id = 'stackcard-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.className = 'overlay';
 
-  overlay.innerHTML = `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:400px;width:100%">
-      <div style="font-size:1rem;font-weight:700;margin-bottom:16px">📛 Your Stack Card</div>
-      
-      <div style="background:linear-gradient(135deg,#13131f,#0a0a0f);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:var(--muted);margin-bottom:8px">// StillNotAThing Stack Card</div>
-        <div style="font-size:1rem;font-weight:700;margin-bottom:4px">@${username}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
-          ${stackTools.length > 0 
-            ? stackTools.map(t => `<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.72rem;font-family:JetBrains Mono,monospace">${t.emoji} ${t.name}</span>`).join('')
-            : '<span style="color:var(--muted);font-size:.78rem">No tools selected yet</span>'}
-        </div>
-        <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted)">stillnotathing.com</div>
-      </div>
+  var stackBadges = stackTools.length
+    ? stackTools.map(function(t) { return '<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.72rem;font-family:JetBrains Mono,monospace">' + t.emoji + ' ' + t.name + '</span>'; }).join('')
+    : '<span style="color:var(--muted);font-size:.78rem">No tools selected</span>';
 
-      ${myStack.length === 0 ? `
-      <button onclick="document.getElementById('stackcard-overlay').remove();localStorage.removeItem('onboarded_${currentUser.id}');showOnboarding()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:8px">+ Set my stack first</button>` : ''}
-
-      <div style="display:flex;gap:8px">
-        <button onclick="shareStackCard('${username}')" style="flex:1;background:var(--accent);border:none;color:#000;padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:DM Sans,sans-serif">↗ Share card</button>
-        <button onclick="copyReadmeBadge('${username}')" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:10px 14px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">Copy README</button>
-      </div>
-      <button onclick="document.getElementById('stackcard-overlay').remove()" style="width:100%;background:none;border:none;color:var(--muted);padding:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;margin-top:6px">Close</button>
-    </div>`;
+  overlay.innerHTML = '<div class="overlay-card">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<div style="font-weight:700">📛 My Stack Card</div>' +
+      '<button onclick="document.getElementById(\'stackcard-overlay\').remove()" class="btn btn-secondary" style="font-size:.75rem">✕</button>' +
+    '</div>' +
+    '<div style="background:linear-gradient(135deg,#13131f,#0a0a0f);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px">' +
+      '<div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted);margin-bottom:6px">// StillNotAThing Stack Card</div>' +
+      '<div style="font-size:.95rem;font-weight:700;margin-bottom:10px">@' + uname + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">' + stackBadges + '</div>' +
+      '<div style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted)">stillnotathing.com</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:7px">' +
+      '<button onclick="shareStackCard(\'' + uname + '\')" class="btn btn-primary" style="flex:1;font-size:.8rem">↗ Share</button>' +
+      '<button onclick="copyReadmeBadge(\'' + uname + '\')" class="btn btn-secondary" style="font-size:.78rem">Copy README</button>' +
+    '</div>' +
+    (!myStack.length ? '<button onclick="document.getElementById(\'stackcard-overlay\').remove();showOnboarding(true)" class="btn btn-secondary" style="width:100%;margin-top:8px;font-size:.78rem">+ Set my stack first</button>' : '') +
+  '</div>';
 
   document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
 }
 
 function shareStackCard(username) {
-  const url = `https://stillnotathing.com/badge.html?user=${username}`;
+  var url = 'https://stillnotathing.com/badge.html?user=' + username;
   if (navigator.share) {
-    navigator.share({ title: 'My dev stack on StillNotAThing', url });
+    navigator.share({ title: 'My dev stack', url: url });
   } else {
     navigator.clipboard.writeText(url);
     toast('Stack card link copied! ✓');
@@ -1512,142 +1146,219 @@ function shareStackCard(username) {
 }
 
 function copyReadmeBadge(username) {
-  const badge = `[![My Stack](https://stillnotathing.com/.netlify/functions/badge?type=devcard&user=${username})](https://stillnotathing.com/badge.html?user=${username})`;
+  var badge = '[![My Stack](https://stillnotathing.com/.netlify/functions/badge?user=' + username + ')](https://stillnotathing.com/badge.html?user=' + username + ')';
   navigator.clipboard.writeText(badge);
-  toast('README badge copied! Paste in your GitHub README 🎉');
+  toast('README badge copied! 🎉');
 }
 
-// ── PERSONALIZED GUIDE LOADING ──
-async function loadPersonalizedGuides(limit) {
-  const myStack = getMyStack();
-  if (myStack.length === 0) return loadGuides(limit);
-  
-  try {
-    // 내 스택 툴 관련 가이드 먼저
-    const toolNames = STACK_TOOLS.filter(t => myStack.includes(t.id)).map(t => t.name);
-    const orFilter = toolNames.map(n => `title.ilike.%${n}%`).join(',');
-    
-    const { data: personalized } = await sb.from('guides')
-      .select('*')
-      .or(orFilter)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    
-    if (personalized && personalized.length > 0) return personalized;
-  } catch(e) {}
-  
-  return loadGuides(limit);
-}
+// ════════════════════════════════════════
+// ACHIEVEMENTS
+// ════════════════════════════════════════
+function checkAchievements(userId) {
+  if (!userId) return [];
+  var key = 'achievements_' + userId;
+  var earned = [];
+  try { earned = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
 
+  var streak = 0;
+  try { streak = JSON.parse(localStorage.getItem('streak_' + userId) || '{"count":0}').count; } catch(e) {}
+  var reads = 0;
+  try { reads = JSON.parse(localStorage.getItem('reads_' + userId) || '[]').length; } catch(e) {}
+  var bookmarks = 0;
+  try { bookmarks = JSON.parse(localStorage.getItem('bookmarks_' + userId) || '[]').length; } catch(e) {}
 
-// ── EXPLORE PAGE ──
-async function loadExplore() {
-  const tc = document.getElementById('explore-tools-container');
-  const hnc = document.getElementById('explore-hn-container');
-  if (!tc || tc.innerHTML.includes('tool-card')) return; // 이미 로드됨
+  var checks = [
+    {id:'first_bookmark', met: bookmarks >= 1},
+    {id:'streak_3', met: streak >= 3},
+    {id:'streak_7', met: streak >= 7},
+    {id:'streak_30', met: streak >= 30},
+    {id:'read_5', met: reads >= 5},
+    {id:'read_20', met: reads >= 20}
+  ];
 
-  const tools = await loadTools().catch(() => defaultTools);
-  tc.innerHTML = tools.map(t => renderToolCard(t)).join('');
-
-  if (hnc && !hnc.innerHTML.includes('hn-item')) {
-    const stories = await loadHN(10).catch(() => []);
-    hnc.innerHTML = stories.map((s,i) => renderHNItem(s,i)).join('') || '<div class="empty">Could not load HN stories.</div>';
-  }
-}
-
-// ── MY SPACE PAGE ──
-async function loadMySpace() {
-  const bc = document.getElementById('myspace-bookmarks-container');
-  const ac = document.getElementById('myspace-achievements-container');
-  const pc = document.getElementById('profile-content-myspace');
-  const nc = document.getElementById('newsletter-myspace-container');
-
-  if (!bc) return;
-
-  // Profile
-  if (pc) {
-    if (currentUser) {
-      const streak = JSON.parse(localStorage.getItem(`streak_${currentUser.id}`) || '{"count":0}');
-      const reads = JSON.parse(localStorage.getItem(`read_${currentUser.id}`) || '[]').length;
-      const myStack = getMyStack();
-      const stackTools = STACK_TOOLS.filter(t => myStack.includes(t.id));
-      pc.innerHTML = `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <img src="${currentUser.user_metadata?.avatar_url||''}" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--accent)" onerror="this.style.display='none'">
-            <div>
-              <div style="font-weight:700">${currentUser.user_metadata?.full_name||'Developer'}</div>
-              <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted)">@${currentUser.user_metadata?.user_name||''}</div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-            <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-family:JetBrains Mono,monospace;font-size:1.3rem;font-weight:700;color:var(--warn)">🔥${streak.count}</div>
-              <div style="font-size:.6rem;color:var(--muted)">streak</div>
-            </div>
-            <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-family:JetBrains Mono,monospace;font-size:1.3rem;font-weight:700;color:var(--accent)">${reads}</div>
-              <div style="font-size:.6rem;color:var(--muted)">reads</div>
-            </div>
-            <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-family:JetBrains Mono,monospace;font-size:1.3rem;font-weight:700;color:var(--accent2)">${myStack.length}</div>
-              <div style="font-size:.6rem;color:var(--muted)">stack</div>
-            </div>
-          </div>
-          ${stackTools.length > 0 ? `
-          <div style="margin-bottom:12px">
-            <div style="font-size:.65rem;color:var(--muted);margin-bottom:6px;font-family:JetBrains Mono,monospace">MY STACK</div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px">
-              ${stackTools.map(t => `<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.72rem">${t.emoji} ${t.name}</span>`).join('')}
-            </div>
-          </div>` : ''}
-          <div style="display:flex;gap:8px">
-            <button onclick="showStackCard()" style="flex:1;background:var(--surface);border:1px solid rgba(0,212,170,.3);color:var(--accent);padding:8px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:600">📛 My Stack Card</button>
-            <button onclick="showLeaderboard()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px 12px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">🏆 Stats</button>
-          </div>
-        </div>`;
-    } else {
-      pc.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
-        <div style="font-size:1.5rem;margin-bottom:8px">👤</div>
-        <div style="font-size:.88rem;font-weight:600;margin-bottom:6px">Sign in to track your progress</div>
-        <button onclick="loginWithGitHub()" style="background:var(--accent);border:none;color:#000;padding:8px 20px;border-radius:7px;cursor:pointer;font-weight:700;font-family:DM Sans,sans-serif">Sign in with GitHub</button>
-      </div>`;
+  checks.forEach(function(c) {
+    if (c.met && earned.indexOf(c.id) === -1) {
+      earned.push(c.id);
+      var a = ACHIEVEMENTS.filter(function(x) { return x.id === c.id; })[0];
+      if (a) setTimeout(function() { toast(a.icon + ' Achievement: ' + a.title + '!', 3500); }, 1200);
     }
-  }
+  });
 
-  // Bookmarks
-  if (currentUser) {
-    const bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${currentUser.id}`) || '[]');
-    if (bookmarks.length > 0) {
-      try {
-        const ids = bookmarks.map(b => b.replace('guide_','')).filter(b => b.length > 10);
-        if (ids.length > 0) {
-          const { data } = await sb.from('guides').select('id,title,description,read_time').in('id', ids);
-          bc.innerHTML = (data||[]).map(g => `
-            <div onclick="openGuide('${g.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer">
-              <div style="font-size:.82rem;font-weight:600;margin-bottom:3px">${g.title}</div>
-              <div style="font-size:.72rem;color:var(--muted)">${g.read_time||'5 min'} read →</div>
-            </div>`).join('') || '<div class="empty">No saved guides yet.</div>';
-        } else bc.innerHTML = '<div class="empty">No saved guides yet.</div>';
-      } catch(e) { bc.innerHTML = '<div class="empty">Could not load bookmarks.</div>'; }
-    } else bc.innerHTML = '<div class="empty">No saved guides yet. Bookmark guides to see them here!</div>';
-  } else bc.innerHTML = '<div class="empty">Sign in to save guides.</div>';
-
-  // Achievements
-  if (ac && currentUser) {
-    const earned = checkAchievements(currentUser.id) || [];
-    ac.innerHTML = earned.length > 0
-      ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${earned.map(id => {
-          const a = ACHIEVEMENTS.find(a => a.id === id);
-          return a ? `<div style="background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.15);border-radius:8px;padding:8px 12px;font-size:.78rem"><span style="font-size:1rem">${a.icon}</span> <strong>${a.title}</strong><div style="font-size:.65rem;color:var(--muted)">${a.desc}</div></div>` : '';
-        }).join('')}</div>`
-      : '<div class="empty">No achievements yet. Keep reading and voting!</div>';
-  } else if (ac) ac.innerHTML = '<div class="empty">Sign in to track achievements.</div>';
-
-  // Newsletter
-  if (nc) nc.innerHTML = document.getElementById('newsletter-container')?.innerHTML || '';
+  localStorage.setItem(key, JSON.stringify(earned));
+  return earned;
 }
 
+// ════════════════════════════════════════
+// NEWSLETTER
+// ════════════════════════════════════════
+function subscribeNewsletter() {
+  var input = document.getElementById('nl-email');
+  if (!input) return;
+  var email = input.value.trim();
+  if (!email || !email.includes('@')) { toast('Enter a valid email'); return; }
+  sb.from('email_subscribers').insert([{email: email}]).then(function(res) {
+    if (res.error) {
+      if (res.error.code === '23505') toast('Already subscribed! ✓');
+      else toast('Something went wrong. Try again.');
+    } else {
+      toast('Subscribed! 📬');
+      input.value = '';
+    }
+  });
+}
+
+// ════════════════════════════════════════
+// SUBMIT TOOL
+// ════════════════════════════════════════
+function submitTool() {
+  var name = document.getElementById('submit-name').value.trim();
+  var url = document.getElementById('submit-url').value.trim();
+  var desc = document.getElementById('submit-desc').value.trim();
+  if (!name || !desc) { toast('Fill in name and description'); return; }
+  sb.from('tool_submissions').insert([{name: name, description: desc, website_url: url, status: 'pending'}])
+  .then(function(res) {
+    if (res.error) toast('Something went wrong.');
+    else {
+      toast('Submitted! 🎉 We\'ll review it soon.');
+      document.getElementById('submit-name').value = '';
+      document.getElementById('submit-url').value = '';
+      document.getElementById('submit-desc').value = '';
+    }
+  });
+}
+
+// ════════════════════════════════════════
+// SHARE
+// ════════════════════════════════════════
+function sharePainRadar() {
+  var url = 'https://stillnotathing.com';
+  var text = '🔥 Developer Pain Radar — See what devs are raging about today';
+  if (navigator.share) {
+    navigator.share({ title: 'StillNotAThing Pain Radar', text: text, url: url });
+  } else {
+    navigator.clipboard.writeText(url);
+    toast('Link copied! ✓');
+  }
+}
+
+// Clipboard: auto-append "via stillnotathing.com"
+document.addEventListener('copy', function(e) {
+  var sel = window.getSelection();
+  if (!sel || sel.toString().length < 30) return;
+  e.clipboardData.setData('text/plain', sel.toString() + '\n\nvia stillnotathing.com');
+  e.preventDefault();
+});
+
+// ════════════════════════════════════════
+// TICKER (real data)
+// ════════════════════════════════════════
+function updateTicker(tools) {
+  if (!tools || !tools.length) return;
+  var items = [];
+  var sorted = tools.slice().sort(function(a,b) { return b.rage - a.rage; });
+  sorted.slice(0,3).forEach(function(t) {
+    var arrow = t.rage >= 6 ? '<span class="t-down">↓</span>' : '<span class="t-warn">⚠</span>';
+    items.push('<span>' + arrow + ' ' + t.name + ' rage ' + t.rage + '/10</span>');
+  });
+  tools.filter(function(t) { return t.trend === 'up'; }).slice(0,3).forEach(function(t) {
+    items.push('<span><span class="t-up">↑</span> ' + t.name + ' happiness ' + t.happiness + '/10</span>');
+  });
+  if (items.length < 4) return;
+  var doubled = items.concat(items);
+  var ticker = document.getElementById('ticker-scroll');
+  if (ticker) ticker.innerHTML = doubled.map(function(item) { return item + '<span>•</span>'; }).join('');
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function init() {
+  // Date
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var now = new Date();
+  var label = document.getElementById('hero-label');
+  if (label) label.textContent = 'DEVELOPER PAIN RADAR // ' + days[now.getDay()].toUpperCase() + ', ' + months[now.getMonth()].toUpperCase() + ' ' + now.getDate();
+
+  // Auth state
+  sb.auth.getSession().then(function(res) {
+    var session = res.data && res.data.session;
+    if (session) {
+      currentUser = session.user;
+      updateAuthUI(currentUser);
+      checkStreak();
+      try {
+        userBookmarks = JSON.parse(localStorage.getItem('bookmarks_' + currentUser.id) || '[]');
+        userReads = JSON.parse(localStorage.getItem('reads_' + currentUser.id) || '[]');
+      } catch(e) {}
+      setTimeout(function() { showOnboarding(); }, 1500);
+    } else {
+      updateAuthUI(null);
+    }
+  });
+
+  sb.auth.onAuthStateChange(function(event, session) {
+    if (event === 'SIGNED_IN' && session) {
+      currentUser = session.user;
+      updateAuthUI(currentUser);
+      checkStreak();
+      try {
+        userBookmarks = JSON.parse(localStorage.getItem('bookmarks_' + currentUser.id) || '[]');
+      } catch(e) {}
+      setTimeout(function() { showOnboarding(); }, 1500);
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      updateAuthUI(null);
+    }
+  });
+
+  // Load pain tab data
+  Promise.all([loadTools(), loadOpportunities(), loadGuides(3)])
+  .then(function(results) {
+    allTools = results[0];
+    var opportunities = results[1];
+    var guides = results[2];
+
+    // Stat cards
+    var avg = allTools.length ? (allTools.reduce(function(a,t) { return a + (t.happiness||0); }, 0) / allTools.length).toFixed(1) : '—';
+    document.getElementById('stat-happiness').textContent = avg;
+    if (guides.length) document.getElementById('stat-guides').textContent = guides.length;
+
+    // Ticker
+    updateTicker(allTools);
+
+    // Render Pain tab
+    renderPainRadar(allTools);
+    renderOpportunityFeed(allTools, opportunities);
+    renderMomentum(allTools);
+
+    // Latest guide
+    var lgc = document.getElementById('latest-guide-container');
+    if (lgc && guides.length) lgc.innerHTML = renderGuideCard(guides[0]);
+    else if (lgc) lgc.innerHTML = '<div class="empty">Guides being generated. Check back soon!</div>';
+  })
+  .catch(function() {
+    document.getElementById('pain-container').innerHTML = '<div class="empty">Could not load data. Try refreshing.</div>';
+  });
+
+  // URL params
+  var params = new URLSearchParams(window.location.search);
+  var guideParam = params.get('guide');
+  var tabParam = params.get('tab');
+
+  if (guideParam) {
+    var tryOpen = setInterval(function() {
+      if (typeof openGuide === 'function') {
+        clearInterval(tryOpen);
+        setTimeout(function() { openGuide(guideParam); }, 300);
+      }
+    }, 100);
+  } else if (tabParam) {
+    switchTab(tabParam);
+  }
+}
+
+init();
 </script>
 </body>
 </html>
