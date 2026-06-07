@@ -6,7 +6,7 @@
 <title>StillNotAThing — Developer Morning Page</title>
 <meta name="description" content="Daily dev resources, tool scorecards, HN stories, and guides for indie hackers and solo builders.">
 <meta property="og:title" content="StillNotAThing — Developer Morning Page">
-<meta property="og:description" content="See what indie hackers are using, loving, and raging about today. Daily tool scores, HN stories, and guides.">
+<meta property="og:description" content="We track what developers are struggling with — and what opportunities that creates. Daily tool scores, HN stories, and guides.">
 <meta property="og:image" content="https://stillnotathing.com/.netlify/functions/og-image?type=pain">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://stillnotathing.com/.netlify/functions/og-image?type=pain">
 <meta name="twitter:title" content="StillNotAThing — Developer Morning Page">
-<meta name="twitter:description" content="See what indie hackers are using, loving, and raging about today.">
+<meta name="twitter:description" content="We track what developers are struggling with — and what opportunities that creates.">
 <link rel="canonical" href="https://stillnotathing.com">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -236,9 +236,9 @@ footer a{color:var(--accent);text-decoration:none}
 </div>
 
 <div class="hero">
-  <div class="hero-date" id="hero-date">MORNING BRIEFING // Loading...</div>
+  <div class="hero-date" id="hero-date">DEVELOPER PAIN RADAR // Loading...</div>
   <h1 class="hero-title">What's shipping today<span class="cursor"></span></h1>
-  <p class="hero-sub">See what indie hackers are using, loving, and raging about today.</p>
+  <p class="hero-sub">We track what developers are struggling with — and what opportunities that creates.</p>
   <div class="stats">
     <div class="stat-card" onclick="showPage('tools')"><div class="stat-num" id="stat-tools">—</div><div class="stat-label">tools indexed →</div></div>
     <div class="stat-card" onclick="showPage('guides')"><div class="stat-num" id="stat-guides">—</div><div class="stat-label">guides →</div></div>
@@ -248,73 +248,79 @@ footer a{color:var(--accent);text-decoration:none}
 </div>
 
 <div class="nav-tabs">
-  <div class="nav-tab active" onclick="showPage('home')">🏠 Home</div>
-  <div class="nav-tab" onclick="showPage('tools')">📊 Tools</div>
+  <div class="nav-tab active" onclick="showPage('home')">🔥 Pain</div>
   <div class="nav-tab" onclick="showPage('guides')">📖 Guides</div>
-  <div class="nav-tab" onclick="showPage('hn')">📰 HN Feed</div>
-  <div class="nav-tab" onclick="showPage('bookmarks')">🔖 Saved</div>
-  <div class="nav-tab" onclick="showPage('profile')">👤 Profile</div>
+  <div class="nav-tab" onclick="showPage('explore')">🔭 Explore</div>
+  <div class="nav-tab" onclick="showPage('myspace')">👤 Mine</div>
   <div class="nav-tab" onclick="window.location.href='/radar.html'">🚀 Radar</div>
   <div class="nav-tab" onclick="window.location.href='/calc.html'">💰 Calc</div>
 </div>
 
 <!-- HOME PAGE -->
 <div class="page active" id="page-home">
-  <div id="push-banner-container"></div>
-  <div id="newsletter-container"></div>
 
-  <!-- PAIN RADAR -->
+  <!-- PAIN RADAR — 핵심 섹션 -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">🔥 Pain Radar — what devs are raging about</div>
+      <div class="section-title">🔥 Pain Radar <span style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">what devs are raging about today</span></div>
       <span class="section-more" onclick="sharePainRadar()" style="color:var(--muted)">↗ share</span>
     </div>
     <div id="pain-radar-container"><div class="loading">Loading...</div></div>
   </div>
 
-  <!-- TOOL MOMENTUM -->
+  <!-- OPPORTUNITY FEED — Pain → Opportunity -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">📈 Tool Momentum</div>
-      <span class="section-more" onclick="showPage('tools')">full scores →</span>
-    </div>
-    <div id="momentum-container"><div class="loading">Loading...</div></div>
-  </div>
-
-  <!-- OPPORTUNITY FEED -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">💡 Opportunity Feed</div>
+      <div class="section-title">💡 Opportunity Feed <span style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">pain = market gap</span></div>
     </div>
     <div id="opportunity-container"><div class="loading">Loading...</div></div>
   </div>
 
+  <!-- TOOL MOMENTUM — 간결하게 -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">📖 Today's Guide</div>
+      <div class="section-title">📈 Tool Momentum</div>
+      <span class="section-more" onclick="showPage('explore')" style="color:var(--muted)">all scores →</span>
+    </div>
+    <div id="momentum-container"><div class="loading">Loading...</div></div>
+  </div>
+
+  <!-- LATEST GUIDES — 마지막 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📖 Latest Guides</div>
       <span class="section-more" onclick="showPage('guides')">all guides →</span>
     </div>
     <div id="home-guide-container"><div class="loading">Loading...</div></div>
   </div>
 
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">📰 Curated HN</div>
-      <span class="section-more" onclick="showPage('hn')">all stories →</span>
-    </div>
-    <div id="home-hn-container"><div class="loading">Loading...</div></div>
-  </div>
-
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">📈 Top Tools</div>
-      <span class="section-more" onclick="showPage('tools')">all →</span>
-    </div>
-    <div id="home-tools-container"><div class="loading">Loading...</div></div>
+  <!-- 숨겨진 컨테이너들 (기존 기능 유지) -->
+  <div style="display:none">
+    <div id="push-banner-container"></div>
+    <div id="newsletter-container"></div>
+    <div id="home-hn-container"></div>
+    <div id="home-tools-container"></div>
   </div>
 </div>
 
-<!-- TOOLS PAGE -->
+<!-- EXPLORE PAGE (Tools + HN + Submit) -->
+<div class="page" id="page-explore">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📊 Tool Scores</div>
+      <span class="section-more" onclick="showPage('submit')">+ Submit Tool</span>
+    </div>
+    <div id="explore-tools-container"><div class="loading">Loading...</div></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📰 HN Feed</div>
+    </div>
+    <div id="explore-hn-container"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<!-- TOOLS PAGE (기존 유지) -->
 <div class="page" id="page-tools">
   <div class="section">
     <div class="section-header">
@@ -358,6 +364,34 @@ footer a{color:var(--accent);text-decoration:none}
 </div>
 
 <!-- PROFILE PAGE -->
+<!-- MY SPACE PAGE -->
+<div class="page" id="page-myspace">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">👤 My Profile</div>
+    </div>
+    <div id="myspace-profile-container">
+      <div id="profile-content-myspace"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🔖 Saved</div>
+    </div>
+    <div id="myspace-bookmarks-container"><div class="loading">Loading...</div></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🎖️ Achievements</div>
+    </div>
+    <div id="myspace-achievements-container"><div class="loading">Loading...</div></div>
+  </div>
+  <!-- Newsletter in My Space -->
+  <div style="padding:0 0 16px">
+    <div id="newsletter-myspace-container"></div>
+  </div>
+</div>
+
 <div class="page" id="page-profile">
   <div id="profile-container">
     <div class="empty">Sign in with GitHub to see your profile 👤</div>
@@ -440,7 +474,7 @@ let hnStoriesCache = [];
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const now = new Date();
-document.getElementById('hero-date').textContent = `MORNING BRIEFING // ${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+document.getElementById('hero-date').textContent = `DEVELOPER PAIN RADAR // ${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
 
 // ── NAV ──
 function showPage(name) {
@@ -1391,66 +1425,75 @@ function saveMyStack(stack) {
 
 function showOnboarding() {
   if (!currentUser) return;
-  const key = `onboarded_${currentUser.id}`;
+  const key = 'onboarded_' + currentUser.id;
   if (localStorage.getItem(key)) return;
+  if (document.getElementById('onboarding-overlay')) return;
 
   const overlay = document.createElement('div');
   overlay.id = 'onboarding-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.style.cssText = [
+    'position:fixed',
+    'top:0','left:0','right:0','bottom:0',
+    'background:rgba(0,0,0,.85)',
+    'z-index:9999',
+    'display:flex',
+    'align-items:center',
+    'justify-content:center',
+    'padding:16px',
+    'overflow-y:auto'
+  ].join(';');
 
-  const selected = new Set();
+  const toolsHTML = STACK_TOOLS.map(function(t) {
+    return '<div onclick="toggleStackTool('' + t.id + '',this)" id="stool_' + t.id + '" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;-webkit-tap-highlight-color:transparent">' +
+      '<span style="font-size:1.1rem">' + t.emoji + '</span>' +
+      '<div><div style="font-size:.82rem;font-weight:600;color:var(--text)">' + t.name + '</div>' +
+      '<div style="font-size:.6rem;color:var(--muted);font-family:JetBrains Mono,monospace">' + t.cat + '</div></div>' +
+      '</div>';
+  }).join('');
 
-  overlay.innerHTML = `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:2rem;margin-bottom:8px">⚡</div>
-        <div style="font-size:1.1rem;font-weight:700;margin-bottom:6px">What's your stack?</div>
-        <div style="font-size:.82rem;color:var(--muted)">We'll personalize your feed based on the tools you use</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px" id="stack-grid">
-        ${STACK_TOOLS.map(t => `
-          <div onclick="toggleStackTool('${t.id}',this)" id="stool_${t.id}" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s">
-            <span style="font-size:1rem">${t.emoji}</span>
-            <div>
-              <div style="font-size:.82rem;font-weight:600">${t.name}</div>
-              <div style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">${t.cat}</div>
-            </div>
-          </div>`).join('')}
-      </div>
-      <button onclick="finishOnboarding()" style="width:100%;background:var(--accent);border:none;color:#000;padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:DM Sans,sans-serif">Set my stack →</button>
-      <button onclick="skipOnboarding()" style="width:100%;background:none;border:none;color:var(--muted);padding:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;margin-top:6px">Skip for now</button>
-    </div>`;
+  overlay.innerHTML =
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch">' +
+      '<div style="text-align:center;margin-bottom:16px">' +
+        '<div style="font-size:2rem;margin-bottom:6px">⚡</div>' +
+        '<div style="font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--text)">What's your stack?</div>' +
+        '<div style="font-size:.78rem;color:var(--muted)">Personalize your feed — select all that apply</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px">' + toolsHTML + '</div>' +
+      '<button onclick="finishOnboarding()" style="display:block;width:100%;background:var(--accent);border:none;color:#000;padding:13px;border-radius:9px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:8px;-webkit-tap-highlight-color:transparent">Save my stack →</button>' +
+      '<button onclick="skipOnboarding()" style="display:block;width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:9px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.8rem;-webkit-tap-highlight-color:transparent">Skip for now</button>' +
+    '</div>';
 
   document.body.appendChild(overlay);
 }
 
 function toggleStackTool(id, el) {
-  const myStack = getMyStack();
-  const idx = myStack.indexOf(id);
+  var myStack = getMyStack();
+  var idx = myStack.indexOf(id);
   if (idx === -1) {
     myStack.push(id);
-    el.style.background = 'rgba(0,212,170,.1)';
-    el.style.borderColor = 'var(--accent)';
+    el.style.background = 'rgba(0,212,170,.15)';
+    el.style.border = '1px solid var(--accent)';
   } else {
     myStack.splice(idx, 1);
     el.style.background = 'var(--surface)';
-    el.style.borderColor = 'var(--border)';
+    el.style.border = '1px solid var(--border)';
   }
   saveMyStack(myStack);
 }
 
 function finishOnboarding() {
   if (!currentUser) return;
-  localStorage.setItem(`onboarded_${currentUser.id}`, '1');
-  document.getElementById('onboarding-overlay')?.remove();
-  toast('Stack saved! Your feed is now personalized 🎉');
-  loadHome(); // 피드 새로고침
+  localStorage.setItem('onboarded_' + currentUser.id, '1');
+  var overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.remove();
+  toast('Stack saved! 🎉');
 }
 
 function skipOnboarding() {
   if (!currentUser) return;
-  localStorage.setItem(`onboarded_${currentUser.id}`, '1');
-  document.getElementById('onboarding-overlay')?.remove();
+  localStorage.setItem('onboarded_' + currentUser.id, '1');
+  var overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.remove();
 }
 
 // ── STACK CARD ──
@@ -1528,6 +1571,115 @@ async function loadPersonalizedGuides(limit) {
   } catch(e) {}
   
   return loadGuides(limit);
+}
+
+
+// ── EXPLORE PAGE ──
+async function loadExplore() {
+  const tc = document.getElementById('explore-tools-container');
+  const hnc = document.getElementById('explore-hn-container');
+  if (!tc || tc.innerHTML.includes('tool-card')) return; // 이미 로드됨
+
+  const tools = await loadTools().catch(() => defaultTools);
+  tc.innerHTML = tools.map(t => renderToolCard(t)).join('');
+
+  if (hnc && !hnc.innerHTML.includes('hn-item')) {
+    const stories = await loadHN(10).catch(() => []);
+    hnc.innerHTML = stories.map((s,i) => renderHNItem(s,i)).join('') || '<div class="empty">Could not load HN stories.</div>';
+  }
+}
+
+// ── MY SPACE PAGE ──
+async function loadMySpace() {
+  const bc = document.getElementById('myspace-bookmarks-container');
+  const ac = document.getElementById('myspace-achievements-container');
+  const pc = document.getElementById('profile-content-myspace');
+  const nc = document.getElementById('newsletter-myspace-container');
+
+  if (!bc) return;
+
+  // Profile
+  if (pc) {
+    if (currentUser) {
+      const streak = JSON.parse(localStorage.getItem(`streak_${currentUser.id}`) || '{"count":0}');
+      const reads = JSON.parse(localStorage.getItem(`read_${currentUser.id}`) || '[]').length;
+      const myStack = getMyStack();
+      const stackTools = STACK_TOOLS.filter(t => myStack.includes(t.id));
+      pc.innerHTML = `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <img src="${currentUser.user_metadata?.avatar_url||''}" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--accent)" onerror="this.style.display='none'">
+            <div>
+              <div style="font-weight:700">${currentUser.user_metadata?.full_name||'Developer'}</div>
+              <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted)">@${currentUser.user_metadata?.user_name||''}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+            <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-family:JetBrains Mono,monospace;font-size:1.3rem;font-weight:700;color:var(--warn)">🔥${streak.count}</div>
+              <div style="font-size:.6rem;color:var(--muted)">streak</div>
+            </div>
+            <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-family:JetBrains Mono,monospace;font-size:1.3rem;font-weight:700;color:var(--accent)">${reads}</div>
+              <div style="font-size:.6rem;color:var(--muted)">reads</div>
+            </div>
+            <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-family:JetBrains Mono,monospace;font-size:1.3rem;font-weight:700;color:var(--accent2)">${myStack.length}</div>
+              <div style="font-size:.6rem;color:var(--muted)">stack</div>
+            </div>
+          </div>
+          ${stackTools.length > 0 ? `
+          <div style="margin-bottom:12px">
+            <div style="font-size:.65rem;color:var(--muted);margin-bottom:6px;font-family:JetBrains Mono,monospace">MY STACK</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              ${stackTools.map(t => `<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.72rem">${t.emoji} ${t.name}</span>`).join('')}
+            </div>
+          </div>` : ''}
+          <div style="display:flex;gap:8px">
+            <button onclick="showStackCard()" style="flex:1;background:var(--surface);border:1px solid rgba(0,212,170,.3);color:var(--accent);padding:8px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:600">📛 My Stack Card</button>
+            <button onclick="showLeaderboard()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px 12px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">🏆 Stats</button>
+          </div>
+        </div>`;
+    } else {
+      pc.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
+        <div style="font-size:1.5rem;margin-bottom:8px">👤</div>
+        <div style="font-size:.88rem;font-weight:600;margin-bottom:6px">Sign in to track your progress</div>
+        <button onclick="loginWithGitHub()" style="background:var(--accent);border:none;color:#000;padding:8px 20px;border-radius:7px;cursor:pointer;font-weight:700;font-family:DM Sans,sans-serif">Sign in with GitHub</button>
+      </div>`;
+    }
+  }
+
+  // Bookmarks
+  if (currentUser) {
+    const bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${currentUser.id}`) || '[]');
+    if (bookmarks.length > 0) {
+      try {
+        const ids = bookmarks.map(b => b.replace('guide_','')).filter(b => b.length > 10);
+        if (ids.length > 0) {
+          const { data } = await sb.from('guides').select('id,title,description,read_time').in('id', ids);
+          bc.innerHTML = (data||[]).map(g => `
+            <div onclick="openGuide('${g.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer">
+              <div style="font-size:.82rem;font-weight:600;margin-bottom:3px">${g.title}</div>
+              <div style="font-size:.72rem;color:var(--muted)">${g.read_time||'5 min'} read →</div>
+            </div>`).join('') || '<div class="empty">No saved guides yet.</div>';
+        } else bc.innerHTML = '<div class="empty">No saved guides yet.</div>';
+      } catch(e) { bc.innerHTML = '<div class="empty">Could not load bookmarks.</div>'; }
+    } else bc.innerHTML = '<div class="empty">No saved guides yet. Bookmark guides to see them here!</div>';
+  } else bc.innerHTML = '<div class="empty">Sign in to save guides.</div>';
+
+  // Achievements
+  if (ac && currentUser) {
+    const earned = checkAchievements(currentUser.id) || [];
+    ac.innerHTML = earned.length > 0
+      ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${earned.map(id => {
+          const a = ACHIEVEMENTS.find(a => a.id === id);
+          return a ? `<div style="background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.15);border-radius:8px;padding:8px 12px;font-size:.78rem"><span style="font-size:1rem">${a.icon}</span> <strong>${a.title}</strong><div style="font-size:.65rem;color:var(--muted)">${a.desc}</div></div>` : '';
+        }).join('')}</div>`
+      : '<div class="empty">No achievements yet. Keep reading and voting!</div>';
+  } else if (ac) ac.innerHTML = '<div class="empty">Sign in to track achievements.</div>';
+
+  // Newsletter
+  if (nc) nc.innerHTML = document.getElementById('newsletter-container')?.innerHTML || '';
 }
 
 </script>
