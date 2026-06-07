@@ -16,25 +16,28 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
-          node << 'SCRIPT'
+          cat > run.js << 'JSEOF'
           const https = require('https');
 
-          function httpFetch(url, opts={}) {
-            return new Promise((resolve, reject) => {
-              const u = new URL(url);
-              const req = https.request({
+          function httpFetch(url, opts) {
+            opts = opts || {};
+            return new Promise(function(resolve, reject) {
+              var u = new URL(url);
+              var req = https.request({
                 hostname: u.hostname,
                 path: u.pathname + u.search,
                 method: opts.method || 'GET',
                 headers: opts.headers || {}
-              }, (res) => {
-                let body = '';
-                res.on('data', c => body += c);
-                res.on('end', () => resolve({
-                  ok: res.statusCode < 400,
-                  json: () => Promise.resolve(JSON.parse(body)),
-                  text: () => Promise.resolve(body)
-                }));
+              }, function(res) {
+                var body = '';
+                res.on('data', function(c) { body += c; });
+                res.on('end', function() {
+                  resolve({
+                    ok: res.statusCode < 400,
+                    json: function() { return Promise.resolve(JSON.parse(body)); },
+                    text: function() { return Promise.resolve(body); }
+                  });
+                });
               });
               req.on('error', reject);
               if (opts.body) req.write(opts.body);
@@ -42,163 +45,196 @@ jobs:
             });
           }
 
-          async function fetchReddit(sub) {
-            try {
-              const r = await httpFetch(`https://www.reddit.com/r/${sub}/hot.json?limit=5`, {
-                headers: { 'User-Agent': 'StillNotAThing/1.0' }
+          function fetchReddit(sub) {
+            return httpFetch('https://www.reddit.com/r/' + sub + '/hot.json?limit=5', {
+              headers: { 'User-Agent': 'StillNotAThing/1.0' }
+            }).then(function(r) {
+              return r.json();
+            }).then(function(d) {
+              return d.data.children.map(function(p) {
+                return {
+                  title: p.data.title,
+                  score: p.data.score,
+                  comments: p.data.num_comments
+                };
               });
-              const d = await r.json();
-              return d.data.children.map(p => ({
-                title: p.data.title,
-                text: (p.data.selftext||'').slice(0,300),
-                score: p.data.score,
-                comments: p.data.num_comments
-              }));
-            } catch(e) { return []; }
+            }).catch(function() { return []; });
           }
 
-          async function checkToolStatus() {
-            const tools = [
+          function checkToolStatus() {
+            var tools = [
               { name: 'Vercel', url: 'https://www.vercel-status.com/api/v2/summary.json' },
               { name: 'Supabase', url: 'https://status.supabase.com/api/v2/summary.json' },
               { name: 'Netlify', url: 'https://www.netlifystatus.com/api/v2/summary.json' },
               { name: 'GitHub', url: 'https://www.githubstatus.com/api/v2/summary.json' }
             ];
-            const incidents = [];
-            for (const t of tools) {
-              try {
-                const r = await httpFetch(t.url);
-                const d = await r.json();
-                const active = (d.incidents||[]).filter(i => i.status !== 'resolved');
-                if (active.length > 0) incidents.push({ tool: t.name, incident: active[0].name, status: active[0].status });
-              } catch(e) {}
-            }
-            return incidents;
+            var promises = tools.map(function(t) {
+              return httpFetch(t.url).then(function(r) {
+                return r.json();
+              }).then(function(d) {
+                var active = (d.incidents || []).filter(function(i) { return i.status !== 'resolved'; });
+                if (active.length > 0) {
+                  return { tool: t.name, incident: active[0].name, status: active[0].status };
+                }
+                return null;
+              }).catch(function() { return null; });
+            });
+            return Promise.all(promises).then(function(results) {
+              return results.filter(function(r) { return r !== null; });
+            });
           }
 
-          async function fetchMastodon() {
-            try {
-              const r = await httpFetch('https://mastodon.social/api/v1/timelines/tag/webdev?limit=5', {
-                headers: { 'User-Agent': 'StillNotAThing/1.0' }
-              });
-              const posts = await r.json();
-              return posts.map(p => ({ content: p.content.replace(/<[^>]*>/g,'').slice(0,200), account: p.account.acct }));
-            } catch(e) { return []; }
-          }
-
-          async function callClaude(prompt) {
-            const data = JSON.stringify({
+          function callClaude(prompt) {
+            var body = JSON.stringify({
               model: 'claude-haiku-4-5-20251001',
               max_tokens: 2000,
               messages: [{ role: 'user', content: prompt }]
             });
-            const r = await httpFetch('https://api.anthropic.com/v1/messages', {
+            return httpFetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': process.env.ANTHROPIC_API_KEY,
                 'anthropic-version': '2023-06-01',
-                'Content-Length': Buffer.byteLength(data).toString()
+                'Content-Length': Buffer.byteLength(body).toString()
               },
-              body: data
+              body: body
+            }).then(function(r) {
+              return r.json();
+            }).then(function(d) {
+              return d.content[0].text;
             });
-            const d = await r.json();
-            return d.content[0].text;
           }
 
-          async function saveArticle(article) {
-            const data = JSON.stringify(article);
-            await httpFetch(`${process.env.SUPABASE_URL}/rest/v1/guides`, {
+          function saveArticle(article) {
+            var body = JSON.stringify(article);
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'apikey': process.env.SUPABASE_SERVICE_KEY,
-                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
                 'Prefer': 'return=minimal',
-                'Content-Length': Buffer.byteLength(data).toString()
+                'Content-Length': Buffer.byteLength(body).toString()
               },
-              body: data
+              body: body
             });
           }
 
-          async function main() {
-            console.log('Fetching all data sources in parallel...');
-            const [webdev, nextjs, supabasePosts, vercelPosts, incidents, mastodon] = await Promise.all([
+          function sleep(ms) {
+            return new Promise(function(r) { setTimeout(r, ms); });
+          }
+
+          function parseArticle(text) {
+            var clean = text.replace(/^```json\n?|\n?```$/g, '').trim();
+            return JSON.parse(clean);
+          }
+
+          function main() {
+            var today = new Date().getDate();
+            var count = 0;
+
+            var guides = [
+              { tool: 'Vercel', angle: 'pricing changes and alternatives 2026', cat: 'hosting' },
+              { tool: 'Supabase', angle: 'Row Level Security beginner guide', cat: 'database' },
+              { tool: 'Netlify', angle: 'scheduled functions debugging', cat: 'devtools' },
+              { tool: 'Stripe', angle: 'webhooks setup for indie SaaS', cat: 'payments' },
+              { tool: 'Railway', angle: 'why indie hackers are switching', cat: 'hosting' },
+              { tool: 'Clerk', angle: 'auth setup in under 10 minutes', cat: 'auth' },
+              { tool: 'Resend', angle: 'transactional email done right', cat: 'email' }
+            ];
+
+            var errors = [
+              { tool: 'GitHub Actions', issue: 'scheduled workflow not triggering' },
+              { tool: 'Supabase', issue: 'CORS errors from browser' },
+              { tool: 'Vercel', issue: '504 timeout on serverless functions' },
+              { tool: 'Netlify', issue: 'env vars not loading in functions' },
+              { tool: 'Stripe', issue: 'webhook signature verification failing' },
+              { tool: 'Railway', issue: 'deployment failing silently' },
+              { tool: 'Clerk', issue: 'redirect loop after authentication' }
+            ];
+
+            var g = guides[today % guides.length];
+            var err = errors[(today + 1) % errors.length];
+
+            return Promise.all([
               fetchReddit('webdev'),
               fetchReddit('nextjs'),
               fetchReddit('Supabase'),
-              fetchReddit('vercel'),
-              checkToolStatus(),
-              fetchMastodon()
-            ]);
+              checkToolStatus()
+            ]).then(function(results) {
+              var webdev = results[0];
+              var nextjs = results[1];
+              var supabasePosts = results[2];
+              var incidents = results[3];
 
-            const today = new Date().getDate();
-            let count = 0;
+              var allPosts = webdev.concat(nextjs).concat(supabasePosts)
+                .filter(function(p) { return p.score > 30; })
+                .sort(function(a, b) { return b.score - a.score; });
 
-            // A. �μ븷 利됱떆 ����
-            for (const inc of incidents) {
-              try {
-                console.log(`Incident: ${inc.tool} - ${inc.incident}`);
-                const res = await callClaude(`Write for StillNotAThing.com.
-BREAKING: ${inc.tool} is experiencing "${inc.incident}" (${inc.status})
-Write urgent incident report + workarounds for indie hackers. 400-500 words.
-Return ONLY JSON: {"title":"BREAKING: [under 65 chars]","description":"[under 160 chars]","content":"[markdown]","category":"devtools","read_time":"3 min read","tags":["${inc.tool.toLowerCase()}","outage","fix"]}`);
-                await saveArticle(JSON.parse(res.replace(/^```json\n?|\n?```$/g,'').trim()));
-                console.log('Saved incident article'); count++;
-              } catch(e) { console.error(e.message); }
-              await new Promise(r => setTimeout(r, 1000));
-            }
+              var related = allPosts.filter(function(p) {
+                return p.title.toLowerCase().indexOf(g.tool.toLowerCase()) !== -1;
+              }).slice(0, 2);
 
-            // B. Reddit + Mastodon 湲곕컲 硫붿씤 媛��대뱶
-            const allPosts = [...webdev,...nextjs,...supabasePosts,...vercelPosts].filter(p=>p.score>30).sort((a,b)=>b.score-a.score);
-            const guides = [
-              {tool:'Vercel',angle:'pricing changes and alternatives 2026',cat:'hosting'},
-              {tool:'Supabase',angle:'Row Level Security �� beginner guide',cat:'database'},
-              {tool:'Netlify',angle:'scheduled functions debugging',cat:'devtools'},
-              {tool:'Stripe',angle:'webhooks setup for indie SaaS',cat:'payments'},
-              {tool:'Railway',angle:'why indie hackers are switching',cat:'hosting'},
-              {tool:'Clerk',angle:'auth setup in under 10 minutes',cat:'auth'},
-              {tool:'Resend',angle:'transactional email done right',cat:'email'}
-            ];
-            const g = guides[today % guides.length];
-            const related = allPosts.filter(p=>p.title.toLowerCase().includes(g.tool.toLowerCase())).slice(0,2);
-            const reddit = related.length>0 ? `\nReddit right now:\n${related.map(p=>`- "${p.title}" (${p.score} upvotes)`).join('\n')}` : '';
-            const masto = mastodon.length>0 ? `\nMastodon devs:\n${mastodon.slice(0,2).map(p=>`- @${p.account}: "${p.content}"`).join('\n')}` : '';
+              var reddit = related.length > 0
+                ? '\nReddit discussions: ' + related.map(function(p) { return '"' + p.title + '" (' + p.score + ' upvotes)'; }).join(', ')
+                : '';
 
-            try {
-              const res = await callClaude(`Write for StillNotAThing.com �� daily radar for indie hackers.
-Topic: "${g.tool} �� ${g.angle}"${reddit}${masto}
-Requirements: real developer voice, 2+ code examples, 3 common mistakes, TL;DR section, 700-900 words, direct tone.
-Return ONLY JSON: {"title":"[under 65 chars]","description":"[under 160 chars]","content":"[markdown]","category":"${g.cat}","read_time":"5 min read","tags":["${g.tool.toLowerCase()}","guide","indie-hacker"]}`);
-              const art = JSON.parse(res.replace(/^```json\n?|\n?```$/g,'').trim());
-              await saveArticle(art);
-              console.log(`Main article: ${art.title}`); count++;
-            } catch(e) { console.error(e.message); }
+              // A. Incident articles
+              var chain = Promise.resolve();
+              incidents.forEach(function(inc) {
+                chain = chain.then(function() {
+                  var prompt = 'Write for StillNotAThing.com. BREAKING: ' + inc.tool + ' is experiencing "' + inc.incident + '" (' + inc.status + '). Write urgent incident report and workarounds for indie hackers. 400-500 words. Return ONLY valid JSON on one line: {"title":"BREAKING title under 65 chars","description":"under 160 chars","content":"markdown content","category":"devtools","read_time":"3 min read","tags":["' + inc.tool.toLowerCase() + '","outage","fix"]}';
+                  return callClaude(prompt).then(function(res) {
+                    return saveArticle(parseArticle(res));
+                  }).then(function() {
+                    console.log('Saved incident: ' + inc.tool);
+                    count++;
+                  }).catch(function(e) {
+                    console.error('Incident error: ' + e.message);
+                  }).then(function() {
+                    return sleep(1000);
+                  });
+                });
+              });
 
-            // C. �먮윭 �닿껐 鍮좊Ⅸ 湲�
-            await new Promise(r => setTimeout(r, 1500));
-            const errors = [
-              {tool:'GitHub Actions',issue:'scheduled workflow not triggering'},
-              {tool:'Supabase',issue:'CORS errors from browser'},
-              {tool:'Vercel',issue:'504 timeout on serverless functions'},
-              {tool:'Netlify',issue:'env vars not loading in functions'},
-              {tool:'Stripe',issue:'webhook signature verification failing'},
-              {tool:'Railway',issue:'deployment failing silently'},
-              {tool:'Clerk',issue:'redirect loop after authentication'}
-            ];
-            const err = errors[(today+1) % errors.length];
-            try {
-              const res = await callClaude(`Fast troubleshooting guide for StillNotAThing.com.
-Problem: "${err.tool} �� ${err.issue}"
-Developer found this at 2am. Get to the fix fast.
-Return ONLY JSON: {"title":"${err.tool}: ${err.issue} fix","description":"[cause and fix in one sentence, under 160 chars]","content":"[markdown: cause + code fix + prevention, 400-500 words]","category":"devtools","read_time":"3 min read","tags":["${err.tool.toLowerCase().replace(/ /g,'-')}","error","fix"]}`);
-              const art = JSON.parse(res.replace(/^```json\n?|\n?```$/g,'').trim());
-              await saveArticle(art);
-              console.log(`Error fix: ${art.title}`); count++;
-            } catch(e) { console.error(e.message); }
+              // B. Main guide
+              chain = chain.then(function() {
+                var prompt = 'Write for StillNotAThing.com, daily radar for indie hackers. Topic: "' + g.tool + ' - ' + g.angle + '".' + reddit + ' Requirements: real developer voice, 2 code examples, 3 common mistakes, TL;DR section, 700-900 words, direct tone. Return ONLY valid JSON on one line: {"title":"SEO title under 65 chars","description":"hook under 160 chars","content":"full markdown article","category":"' + g.cat + '","read_time":"5 min read","tags":["' + g.tool.toLowerCase() + '","guide","indie-hacker"]}';
+                return callClaude(prompt).then(function(res) {
+                  return saveArticle(parseArticle(res));
+                }).then(function() {
+                  console.log('Saved main guide: ' + g.tool);
+                  count++;
+                }).catch(function(e) {
+                  console.error('Guide error: ' + e.message);
+                });
+              });
 
-            console.log(`Done! ${count} articles. ${incidents.length} incidents covered.`);
+              // C. Error fix article
+              chain = chain.then(function() {
+                return sleep(1500);
+              }).then(function() {
+                var prompt = 'Fast troubleshooting guide for StillNotAThing.com. Problem: "' + err.tool + ' - ' + err.issue + '". Developer found this at 2am, get to the fix fast. Return ONLY valid JSON on one line: {"title":"' + err.tool + ' ' + err.issue + ' fix","description":"cause and fix in one sentence under 160 chars","content":"markdown: cause with code, fix with code, prevention. 400-500 words","category":"devtools","read_time":"3 min read","tags":["' + err.tool.toLowerCase().replace(/ /g, '-') + '","error","fix"]}';
+                return callClaude(prompt).then(function(res) {
+                  return saveArticle(parseArticle(res));
+                }).then(function() {
+                  console.log('Saved error fix: ' + err.tool);
+                  count++;
+                }).catch(function(e) {
+                  console.error('Error fix error: ' + e.message);
+                });
+              });
+
+              return chain.then(function() {
+                console.log('Done! ' + count + ' articles generated. ' + incidents.length + ' incidents covered.');
+              });
+            });
           }
 
-          main().catch(e => { console.error(e); process.exit(1); });
-          SCRIPT
+          main().catch(function(e) {
+            console.error(e);
+            process.exit(1);
+          });
+          JSEOF
+          node run.js
