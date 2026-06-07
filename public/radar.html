@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Indie Hacker Radar — StillNotAThing</title>
-<meta name="description" content="Today's Product Hunt launches, GitHub trending, MRR milestones, and build-in-public updates for indie hackers.">
+<meta name="description" content="Today's GitHub trending, MRR milestones, build-in-public updates, and security alerts for indie hackers.">
 <meta property="og:title" content="Indie Hacker Radar — StillNotAThing">
-<meta property="og:description" content="What indie hackers are launching, trending, and celebrating today.">
-<meta property="og:url" content="https://stillnotathing.com/radar">
-<link rel="canonical" href="https://stillnotathing.com/radar">
+<meta property="og:description" content="Real-time radar: launches, trending repos, MRR wins, and security alerts for indie hackers.">
+<meta property="og:url" content="https://stillnotathing.com/radar.html">
+<link rel="canonical" href="https://stillnotathing.com/radar.html">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -16,60 +17,42 @@
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
 header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .logo{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--accent);text-decoration:none}
-.back{font-size:.78rem;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:4px}
+.back{font-size:.78rem;color:var(--muted);text-decoration:none}
 .main{padding:20px;max-width:900px;margin:0 auto}
-.hero{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px}
+.hero{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px}
 .hero-date{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
-.hero-title{font-size:1.8rem;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
+.hero-title{font-size:1.6rem;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
 .hero-sub{color:var(--muted);font-size:.85rem}
-.tabs{display:flex;gap:2px;margin-bottom:24px;overflow-x:auto;background:var(--surface);border-radius:10px;padding:4px}
+.tabs{display:flex;gap:2px;margin-bottom:20px;background:var(--surface);border-radius:10px;padding:4px;overflow-x:auto}
 .tab{padding:8px 16px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;border-radius:7px;transition:all .15s;white-space:nowrap}
 .tab.active{background:var(--bg);color:var(--accent);font-weight:600}
 .section{display:none}.section.active{display:block}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.section-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
-.item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;transition:all .15s}
+.item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .15s}
 .item:hover{border-color:#2e2e40}
-.item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.item-left{display:flex;align-items:flex-start;gap:10px;flex:1}
-.item-num{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);min-width:20px;margin-top:2px}
-.item-icon{width:32px;height:32px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
-.item-info{flex:1}
-.item-title{font-size:.88rem;font-weight:600;line-height:1.3;margin-bottom:3px}
-.item-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
+.item-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.item-title{font-size:.88rem;font-weight:600;line-height:1.3;color:var(--text)}
+.item-desc{font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:8px}
 .item-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)}
-.item-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .tag{font-size:.62rem;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace}
-.tag-ph{background:rgba(255,102,0,.1);color:#ff6600}
 .tag-gh{background:rgba(107,107,128,.1);color:var(--muted)}
 .tag-mrr{background:rgba(34,197,94,.1);color:var(--up)}
 .tag-bip{background:rgba(124,92,252,.1);color:var(--accent2)}
 .tag-sec{background:rgba(239,68,68,.1);color:var(--down)}
 .btn-sm{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:5px;font-size:.68rem;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
-.upvote{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:5px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;transition:all .15s}
-.upvote:hover,.upvote.voted{background:rgba(0,212,170,.1);border-color:var(--accent);color:var(--accent)}
-.mrr-card{background:var(--card);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:16px;margin-bottom:10px;position:relative;overflow:hidden}
-.mrr-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(34,197,94,.1),transparent);border-radius:50%}
-.mrr-amount{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--up);margin-bottom:4px}
-.mrr-title{font-size:.85rem;font-weight:600;margin-bottom:4px}
-.mrr-desc{font-size:.75rem;color:var(--muted);line-height:1.4;margin-bottom:10px}
-.mrr-actions{display:flex;gap:6px}
-.security-card{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px;margin-bottom:10px}
-.security-title{font-size:.85rem;font-weight:700;color:var(--down);margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.security-desc{font-size:.75rem;color:var(--muted);line-height:1.4;margin-bottom:8px}
-.security-meta{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);display:flex;gap:10px}
-.severity-high{color:var(--down)}
-.severity-med{color:var(--warn)}
+.mrr-amount{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--up);margin-bottom:4px}
+.security-item{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:14px;margin-bottom:10px}
+.severity-HIGH{color:var(--down)}
+.severity-MEDIUM{color:var(--warn)}
+.severity-LOW{color:var(--muted)}
+.empty{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;color:var(--muted);font-size:.82rem}
 .loading{text-align:center;padding:24px;color:var(--muted);font-size:.75rem;font-family:'JetBrains Mono',monospace}
-.empty{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem}
+.last-updated{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:12px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:8px;font-size:.8rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
-.series-badge{background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.2);color:var(--accent2);padding:2px 8px;border-radius:4px;font-size:.65rem;font-family:'JetBrains Mono',monospace}
 </style>
 </head>
 <body>
-
 <header>
   <a href="/" class="logo">⚡ StillNotAThing</a>
   <a href="/" class="back">← Home</a>
@@ -79,62 +62,41 @@ header{background:rgba(10,10,15,.95);backdrop-filter:blur(20px);border-bottom:1p
   <div class="hero">
     <div class="hero-date" id="hero-date">INDIE HACKER RADAR // Loading...</div>
     <h1 class="hero-title">What's happening today</h1>
-    <p class="hero-sub">Launches, trending repos, MRR milestones, and security alerts — curated for indie hackers.</p>
+    <p class="hero-sub">Real data from GitHub, Reddit, and security feeds — updated daily at 7AM KST.</p>
   </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('ph')">🚀 Launches</div>
-    <div class="tab" onclick="switchTab('gh')">⭐ Trending</div>
-    <div class="tab" onclick="switchTab('mrr')">💰 MRR Wins</div>
-    <div class="tab" onclick="switchTab('bip')">🏗️ Build in Public</div>
-    <div class="tab" onclick="switchTab('security')">🔒 Security</div>
+    <div class="tab active" onclick="switchTab('hn',this)">🚀 Show HN</div>
+    <div class="tab" onclick="switchTab('gh',this)">⭐ Trending</div>
+    <div class="tab" onclick="switchTab('mrr',this)">💰 MRR Wins</div>
+    <div class="tab" onclick="switchTab('bip',this)">🏗️ Build in Public</div>
+    <div class="tab" onclick="switchTab('security',this)">🔒 Security</div>
   </div>
 
-  <!-- PRODUCT HUNT -->
-  <div class="section active" id="section-ph">
-    <div class="section-header">
-      <div class="section-title">🚀 Today's Launches</div>
-    </div>
-    <div id="ph-container"><div class="loading">Loading launches...</div></div>
+  <div class="section active" id="section-hn">
+    <div id="hn-container"><div class="loading">Loading Show HN...</div></div>
   </div>
-
-  <!-- GITHUB TRENDING -->
   <div class="section" id="section-gh">
-    <div class="section-header">
-      <div class="section-title">⭐ GitHub Trending Today</div>
-    </div>
-    <div id="gh-container"><div class="loading">Loading trending repos...</div></div>
+    <div id="gh-container"><div class="loading">Loading...</div></div>
   </div>
-
-  <!-- MRR MILESTONES -->
   <div class="section" id="section-mrr">
-    <div class="section-header">
-      <div class="section-title">💰 MRR Milestones This Week</div>
-      <span class="series-badge">Weekly Series</span>
-    </div>
     <div id="mrr-container"><div class="loading">Loading...</div></div>
   </div>
-
-  <!-- BUILD IN PUBLIC -->
   <div class="section" id="section-bip">
-    <div class="section-header">
-      <div class="section-title">🏗️ Build in Public</div>
-    </div>
     <div id="bip-container"><div class="loading">Loading...</div></div>
   </div>
-
-  <!-- SECURITY -->
   <div class="section" id="section-security">
-    <div class="section-header">
-      <div class="section-title">🔒 Security Alerts — Indie Stack</div>
-    </div>
-    <div id="security-container"><div class="loading">Checking for alerts...</div></div>
+    <div id="security-container"><div class="loading">Loading...</div></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+const SUPABASE_URL = 'https://xlxztrnpmzklbnyfkrze.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_RYLor2fbXqj4aHhSW0vCsw_7ZfP2a58';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const now = new Date();
@@ -148,184 +110,196 @@ function toast(msg) {
 }
 
 function share(title, url) {
-  const shareUrl = url || `https://stillnotathing.com/radar`;
-  if (navigator.share) {
-    navigator.share({ title, url: shareUrl });
-  } else {
-    navigator.clipboard.writeText(shareUrl);
-    toast('Link copied! ✓');
-  }
+  if (navigator.share) navigator.share({ title, url });
+  else { navigator.clipboard.writeText(url); toast('Link copied! ✓'); }
 }
 
-function switchTab(tab) {
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(h / 24);
+  if (d > 0) return d + 'd ago';
+  if (h > 0) return h + 'h ago';
+  return 'just now';
+}
+
+const loaded = {};
+function switchTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  event.target.classList.add('active');
+  el.classList.add('active');
   document.getElementById('section-' + tab).classList.add('active');
-  if (tab === 'gh' && !window.ghLoaded) loadGitHubTrending();
-  if (tab === 'mrr' && !window.mrrLoaded) loadMRR();
-  if (tab === 'bip' && !window.bipLoaded) loadBuildInPublic();
-  if (tab === 'security' && !window.secLoaded) loadSecurity();
+  if (!loaded[tab]) { loaded[tab] = true; loaders[tab](); }
 }
 
-// PRODUCT HUNT via HN "Show HN" posts (PH API requires auth)
-async function loadLaunches() {
+const loaders = {
+  hn: loadHN,
+  gh: loadGitHubTrending,
+  mrr: loadMRR,
+  bip: loadBIP,
+  security: loadSecurity
+};
+
+// Show HN (HN Algolia API - real data)
+async function loadHN() {
+  const c = document.getElementById('hn-container');
   try {
-    const res = await fetch('https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=10');
+    const res = await fetch('https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=15&numericFilters=points>10');
     const data = await res.json();
-    const c = document.getElementById('ph-container');
-    c.innerHTML = data.hits.map((h, i) => `
-      <div class="item">
-        <div class="item-top">
-          <div class="item-left">
-            <div class="item-num">${String(i+1).padStart(2,'0')}</div>
-            <div class="item-icon">🚀</div>
-            <div class="item-info">
-              <div class="item-title">${h.title.replace('Show HN: ','')}</div>
-              <div class="item-meta">
-                <span class="tag tag-ph">Show HN</span>
+    if (!data.hits || !data.hits.length) {
+      c.innerHTML = '<div class="empty">No Show HN posts found right now.</div>';
+      return;
+    }
+    c.innerHTML = `<div class="last-updated">Live from Hacker News · ${data.hits.length} posts</div>` +
+      data.hits.map((h, i) => `
+        <div class="item">
+          <div class="item-header">
+            <div>
+              <div class="item-meta" style="margin-bottom:5px">
+                <span class="tag" style="background:rgba(255,102,0,.1);color:#ff6600">Show HN</span>
                 <span>⬆ ${h.points} pts</span>
                 <span>💬 ${h.num_comments} comments</span>
+                <span>${timeAgo(h.created_at)}</span>
               </div>
+              <div class="item-title">${h.title.replace('Show HN: ','')}</div>
             </div>
           </div>
-          <div class="item-actions">
-            <button class="btn-sm" onclick="share('${h.title.replace(/'/g,"\\'")}','https://stillnotathing.com/radar?item=${h.objectID}')">↗ share</button>
-            <button class="upvote" onclick="this.classList.toggle('voted');this.textContent=this.classList.contains('voted')?'✓ Saved':'▲ Save'">▲ Save</button>
+          <div class="item-meta">
+            ${h.url ? `<a href="${h.url}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:.72rem">View project →</a>` : ''}
+            <a href="https://news.ycombinator.com/item?id=${h.objectID}" target="_blank" style="color:var(--muted);text-decoration:none;font-size:.72rem">HN discussion →</a>
+            <button class="btn-sm" onclick="share('${h.title.replace(/'/g,"\\'")}','https://stillnotathing.com/radar.html?item=${h.objectID}')">↗ share</button>
           </div>
-        </div>
-        ${h.url ? `<a href="${h.url}" target="_blank" style="font-size:.72rem;color:var(--accent);text-decoration:none">→ View launch</a>` : ''}
-      </div>
-    `).join('');
+        </div>`).join('');
   } catch(e) {
-    document.getElementById('ph-container').innerHTML = '<div class="empty">Could not load launches.</div>';
+    c.innerHTML = '<div class="empty">Could not load Show HN posts. Try again later.</div>';
   }
 }
 
-// GITHUB TRENDING via scraping
+// GitHub Trending (Supabase - collected daily)
 async function loadGitHubTrending() {
-  window.ghLoaded = true;
-  const mockRepos = [
-    { name: 'vercel/ai', desc: 'Build AI-powered applications with React, Svelte, Vue, and Solid', lang: 'TypeScript', stars: '12.4k', today: '+234' },
-    { name: 'supabase/supabase', desc: 'The open source Firebase alternative', lang: 'TypeScript', stars: '71k', today: '+189' },
-    { name: 'shadcn-ui/ui', desc: 'Beautifully designed components built with Radix UI and Tailwind CSS', lang: 'TypeScript', stars: '68k', today: '+156' },
-    { name: 'lucia-auth/lucia', desc: 'Authentication, simple and clean', lang: 'TypeScript', stars: '8.2k', today: '+98' },
-    { name: 'trpc/trpc', desc: 'End-to-end typesafe APIs made easy', lang: 'TypeScript', stars: '34k', today: '+87' },
-    { name: 't3-oss/create-t3-app', desc: 'The best way to start a full-stack, typesafe Next.js app', lang: 'TypeScript', stars: '24k', today: '+76' },
-    { name: 'drizzle-team/drizzle-orm', desc: 'TypeScript ORM that is production ready', lang: 'TypeScript', stars: '21k', today: '+65' },
-  ];
-
   const c = document.getElementById('gh-container');
-  c.innerHTML = mockRepos.map((r, i) => `
-    <div class="item">
-      <div class="item-top">
-        <div class="item-left">
-          <div class="item-num">${String(i+1).padStart(2,'0')}</div>
-          <div class="item-icon">⭐</div>
-          <div class="item-info">
-            <div class="item-title">${r.name}</div>
-            <div class="item-desc">${r.desc}</div>
-            <div class="item-meta">
-              <span class="tag tag-gh">${r.lang}</span>
-              <span>⭐ ${r.stars}</span>
-              <span style="color:var(--up)">${r.today} today</span>
+  try {
+    const { data, error } = await sb.from('trending_repos').select('*').order('collected_at', { ascending: false }).limit(20);
+    if (error || !data || !data.length) {
+      c.innerHTML = '<div class="empty">GitHub trending data is collected daily at 7AM KST. Check back tomorrow!</div>';
+      return;
+    }
+    const latest = data[0].collected_at;
+    c.innerHTML = `<div class="last-updated">Collected ${timeAgo(latest)} · ${data.length} repos</div>` +
+      data.map(r => `
+        <div class="item">
+          <div class="item-header">
+            <div style="flex:1">
+              <div class="item-meta" style="margin-bottom:5px">
+                <span class="tag tag-gh">${r.language || 'Unknown'}</span>
+                ${r.stars_today ? `<span style="color:var(--up)">${r.stars_today}</span>` : ''}
+              </div>
+              <div class="item-title">${r.name}</div>
+              ${r.description ? `<div class="item-desc">${r.description}</div>` : ''}
             </div>
           </div>
-        </div>
-        <div class="item-actions">
-          <button class="btn-sm" onclick="share('${r.name}','https://github.com/${r.name}')">↗ share</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
+          <div class="item-meta">
+            <a href="${r.url}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:.72rem">View on GitHub →</a>
+            <button class="btn-sm" onclick="share('${r.name.replace(/'/g,"\\'")}','${r.url}')">↗ share</button>
+          </div>
+        </div>`).join('');
+  } catch(e) {
+    c.innerHTML = '<div class="empty">Could not load trending data.</div>';
+  }
 }
 
-// MRR MILESTONES from Indie Hackers / Reddit
+// MRR Milestones (Supabase - collected from Reddit)
 async function loadMRR() {
-  window.mrrLoaded = true;
-  const milestones = [
-    { amount: '$5,000 MRR', title: 'Reached $5K MRR with a simple Notion template business', desc: 'Started 8 months ago. No code. Just Gumroad + Twitter. Key: niched down to "Notion for lawyers"', source: 'r/indiehackers', time: '2 days ago' },
-    { amount: '$1,000 MRR', title: 'First $1K MRR! It took 14 months but it finally happened', desc: 'SaaS for freelance designers. Biggest lesson: talk to users before building. I ignored this for 10 months.', source: 'IndieHackers', time: '3 days ago' },
-    { amount: '$10,000 MRR', title: 'Hit $10K MRR — here\'s everything I did differently this year', desc: 'Built in public from day 1. Distribution was harder than building. My Twitter brought 60% of customers.', source: 'r/SaaS', time: '5 days ago' },
-  ];
-
   const c = document.getElementById('mrr-container');
-  c.innerHTML = milestones.map(m => `
-    <div class="mrr-card">
-      <div class="mrr-amount">${m.amount}</div>
-      <div class="mrr-title">${m.title}</div>
-      <div class="mrr-desc">${m.desc}</div>
-      <div class="mrr-actions">
-        <button class="btn-sm" onclick="share('${m.title.replace(/'/g,"\\'")}','https://stillnotathing.com/radar?tab=mrr')">↗ share</button>
-        <span style="font-family:monospace;font-size:.65rem;color:var(--muted)">${m.source} · ${m.time}</span>
-      </div>
-    </div>
-  `).join('');
+  try {
+    const { data, error } = await sb.from('mrr_milestones').select('*').order('collected_at', { ascending: false }).limit(10);
+    if (error || !data || !data.length) {
+      c.innerHTML = '<div class="empty">MRR milestone data is collected daily from Reddit and Indie Hackers. Check back tomorrow!</div>';
+      return;
+    }
+    const latest = data[0].collected_at;
+    c.innerHTML = `<div class="last-updated">Sourced from Reddit · Updated ${timeAgo(latest)}</div>` +
+      data.map(m => `
+        <div class="item" style="border-color:rgba(34,197,94,.15)">
+          <div class="mrr-amount">${m.amount}</div>
+          <div class="item-title" style="margin-bottom:6px">${m.title}</div>
+          <div class="item-desc">${m.description}</div>
+          <div class="item-meta">
+            <span class="tag tag-mrr">${m.source || 'Community'}</span>
+            ${m.source_url ? `<a href="${m.source_url}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:.72rem">Source →</a>` : ''}
+            <button class="btn-sm" onclick="share('${(m.title||'').replace(/'/g,"\\'")}','https://stillnotathing.com/radar.html')">↗ share</button>
+          </div>
+        </div>`).join('');
+  } catch(e) {
+    c.innerHTML = '<div class="empty">Could not load MRR data.</div>';
+  }
 }
 
-// BUILD IN PUBLIC
-async function loadBuildInPublic() {
-  window.bipLoaded = true;
-  const updates = [
-    { handle: '@levelsio', update: 'PhotoAI hit 2M users. Still solo. Still no employees. Still loving it.', metric: '2M users', time: '6h ago' },
-    { handle: '@marc_louvion', update: 'ShipFast just crossed $100K total revenue. It\'s a Next.js boilerplate. Boring beats brilliant.', metric: '$100K revenue', time: '1d ago' },
-    { handle: '@arvidkahl', update: 'Day 847 of building in public. Revenue: $8,200 MRR. Biggest win this week: 0 churn.', metric: '$8.2K MRR', time: '2d ago' },
-    { handle: '@jdorfman', update: 'Launched v2 of my SaaS. Added team features. First enterprise customer signed same day.', metric: 'Enterprise customer', time: '3d ago' },
-  ];
-
+// Build in Public (Supabase)
+async function loadBIP() {
   const c = document.getElementById('bip-container');
-  c.innerHTML = updates.map(u => `
-    <div class="item">
-      <div class="item-top">
-        <div class="item-left">
-          <div class="item-icon">🏗️</div>
-          <div class="item-info">
-            <div class="item-title">${u.handle}</div>
-            <div class="item-desc">${u.update}</div>
-            <div class="item-meta">
-              <span class="tag tag-bip">${u.metric}</span>
-              <span>${u.time}</span>
+  try {
+    const { data, error } = await sb.from('bip_updates').select('*').order('collected_at', { ascending: false }).limit(10);
+    if (error || !data || !data.length) {
+      c.innerHTML = '<div class="empty">Build in public updates are collected daily from Reddit and community feeds. Check back tomorrow!</div>';
+      return;
+    }
+    const latest = data[0].collected_at;
+    c.innerHTML = `<div class="last-updated">Sourced from Reddit · Updated ${timeAgo(latest)}</div>` +
+      data.map(b => `
+        <div class="item">
+          <div class="item-header">
+            <div>
+              <div class="item-meta" style="margin-bottom:5px">
+                <span class="tag tag-bip">${b.metric || 'Update'}</span>
+                <span>${b.source || 'Community'}</span>
+              </div>
+              <div class="item-title">${b.handle}</div>
+              <div class="item-desc">${b.content}</div>
             </div>
           </div>
-        </div>
-        <div class="item-actions">
-          <button class="btn-sm" onclick="share('${u.update.replace(/'/g,"\\'")}','https://stillnotathing.com/radar?tab=bip')">↗ share</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
+          <div class="item-meta">
+            <button class="btn-sm" onclick="share('${(b.handle||'').replace(/'/g,"\\'")}','https://stillnotathing.com/radar.html')">↗ share</button>
+          </div>
+        </div>`).join('');
+  } catch(e) {
+    c.innerHTML = '<div class="empty">Could not load build in public data.</div>';
+  }
 }
 
-// SECURITY ALERTS
+// Security Alerts (Supabase - from GitHub Advisory)
 async function loadSecurity() {
-  window.secLoaded = true;
-  const alerts = [
-    { title: 'Next.js SSRF vulnerability CVE-2026-44578', desc: 'Affects self-hosted Next.js instances. Update to 15.2.4+ immediately. 79,000 servers exposed.', severity: 'HIGH', affected: 'Next.js <15.2.4', date: '2026-03-15' },
-    { title: 'Supabase: exposed service_role keys in client bundles', desc: 'Common mistake: using service_role key in frontend code. Rotate immediately if exposed.', severity: 'HIGH', affected: 'Supabase all versions', date: '2026-02-28' },
-    { title: 'Netlify: environment variable exposure in build logs', desc: 'Secrets printed in build logs if using certain npm packages. Check your build logs.', severity: 'MEDIUM', affected: 'Netlify Build', date: '2026-01-20' },
-  ];
-
   const c = document.getElementById('security-container');
-  c.innerHTML = alerts.map(a => `
-    <div class="security-card">
-      <div class="security-title">
-        <span>🚨</span>
-        <span class="severity-${a.severity === 'HIGH' ? 'high' : 'med'}">[${a.severity}]</span>
-        ${a.title}
-      </div>
-      <div class="security-desc">${a.desc}</div>
-      <div class="security-meta">
-        <span>Affects: ${a.affected}</span>
-        <span>${a.date}</span>
-      </div>
-      <div style="margin-top:8px">
-        <button class="btn-sm" onclick="share('${a.title.replace(/'/g,"\\'")}','https://stillnotathing.com/radar?tab=security')">↗ share this alert</button>
-      </div>
-    </div>
-  `).join('');
+  try {
+    const { data, error } = await sb.from('security_alerts').select('*').order('published_at', { ascending: false }).limit(10);
+    if (error || !data || !data.length) {
+      c.innerHTML = '<div class="empty">No active security alerts for indie hacker stacks right now. ✅</div>';
+      return;
+    }
+    c.innerHTML = data.map(a => `
+      <div class="security-item">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span>🚨</span>
+          <span class="severity-${a.severity}" style="font-family:JetBrains Mono,monospace;font-size:.7rem;font-weight:700">[${a.severity}]</span>
+          <span style="font-size:.85rem;font-weight:700;color:var(--text)">${a.title}</span>
+        </div>
+        ${a.description ? `<div class="item-desc">${a.description}</div>` : ''}
+        <div class="item-meta">
+          ${a.affected ? `<span>Affects: ${a.affected}</span>` : ''}
+          ${a.cve_id ? `<span>${a.cve_id}</span>` : ''}
+          <span>${timeAgo(a.published_at)}</span>
+          ${a.source_url ? `<a href="${a.source_url}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:.72rem">Details →</a>` : ''}
+          <button class="btn-sm" onclick="share('${(a.title||'').replace(/'/g,"\\'")}','https://stillnotathing.com/radar.html')">↗ share</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    c.innerHTML = '<div class="empty">Could not load security data.</div>';
+  }
 }
 
-loadLaunches();
+// 초기 로드
+loadHN();
+loaded['hn'] = true;
 </script>
 </body>
 </html>
