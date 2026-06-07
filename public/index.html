@@ -237,7 +237,7 @@ footer a{color:var(--accent);text-decoration:none}
 
 <div class="hero">
   <div class="hero-date" id="hero-date">DEVELOPER PAIN RADAR // Loading...</div>
-  <h1 class="hero-title">What's shipping today<span class="cursor"></span></h1>
+  <h1 class="hero-title">Developers complain.<br>Opportunities appear.</h1>
   <p class="hero-sub">We track what developers are struggling with — and what opportunities that creates.</p>
   <div class="stats">
     <div class="stat-card" onclick="showPage('tools')"><div class="stat-num" id="stat-tools">—</div><div class="stat-label">tools indexed →</div></div>
@@ -400,39 +400,7 @@ footer a{color:var(--accent);text-decoration:none}
 
 <!-- SUBMIT TOOL PAGE -->
 <div class="page" id="page-submit">
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">➕ Submit a Tool</div>
-    </div>
-    <div class="submit-form">
-      <div class="form-group">
-        <label class="form-label">Tool Name</label>
-        <input class="form-input" id="submit-name" placeholder="e.g. Railway">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Category</label>
-        <select class="form-select" id="submit-category">
-          <option value="hosting">Hosting</option>
-          <option value="database">Database</option>
-          <option value="payments">Payments</option>
-          <option value="auth">Auth</option>
-          <option value="email">Email</option>
-          <option value="devtools">DevTools</option>
-          <option value="monitoring">Monitoring</option>
-          <option value="storage">Storage</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Website URL</label>
-        <input class="form-input" id="submit-url" placeholder="https://railway.app">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Why do indie hackers use it?</label>
-        <input class="form-input" id="submit-desc" placeholder="Simple deployment, usage-based pricing...">
-      </div>
-      <button class="btn-submit" onclick="submitTool()">Submit Tool →</button>
-    </div>
-  </div>
+  
 </div>
 
 <footer>
@@ -1443,19 +1411,17 @@ function showOnboarding() {
     'overflow-y:auto'
   ].join(';');
 
-  const toolsHTML = STACK_TOOLS.map(function(t) {
-    return '<div onclick="toggleStackTool('' + t.id + '',this)" id="stool_' + t.id + '" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;-webkit-tap-highlight-color:transparent">' +
-      '<span style="font-size:1.1rem">' + t.emoji + '</span>' +
-      '<div><div style="font-size:.82rem;font-weight:600;color:var(--text)">' + t.name + '</div>' +
-      '<div style="font-size:.6rem;color:var(--muted);font-family:JetBrains Mono,monospace">' + t.cat + '</div></div>' +
-      '</div>';
+    var toolsHTML = STACK_TOOLS.map(function(t) {
+    var cls = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;';
+    var inner = '<span style="font-size:1.1rem">' + t.emoji + '</span><div><div style="font-size:.82rem;font-weight:600;color:var(--text)">' + t.name + '</div><div style="font-size:.6rem;color:var(--muted)">' + t.cat + '</div></div>';
+    return '<div id="stool_' + t.id + '" data-id="' + t.id + '" onclick="toggleStackTool(this.dataset.id,this)" style="' + cls + '">' + inner + '</div>';
   }).join('');
 
   overlay.innerHTML =
     '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch">' +
       '<div style="text-align:center;margin-bottom:16px">' +
         '<div style="font-size:2rem;margin-bottom:6px">⚡</div>' +
-        '<div style="font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--text)">What's your stack?</div>' +
+        '<div style="font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--text)">What\'s your stack?</div>' +
         '<div style="font-size:.78rem;color:var(--muted)">Personalize your feed — select all that apply</div>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px">' + toolsHTML + '</div>' +
