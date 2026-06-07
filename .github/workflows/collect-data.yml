@@ -1,0 +1,287 @@
+name: Daily Data Collection
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect real data
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          cat > collect.js << 'JSEOF'
+          const https = require('https');
+
+          function httpFetch(url, opts) {
+            opts = opts || {};
+            return new Promise(function(resolve, reject) {
+              var u = new URL(url);
+              var req = https.request({
+                hostname: u.hostname,
+                path: u.pathname + u.search,
+                method: opts.method || 'GET',
+                headers: opts.headers || { 'User-Agent': 'StillNotAThing/1.0' }
+              }, function(res) {
+                var body = '';
+                res.on('data', function(c) { body += c; });
+                res.on('end', function() {
+                  resolve({
+                    ok: res.statusCode < 400,
+                    status: res.statusCode,
+                    json: function() { return Promise.resolve(JSON.parse(body)); },
+                    text: function() { return Promise.resolve(body); }
+                  });
+                });
+              });
+              req.on('error', reject);
+              if (opts.body) req.write(opts.body);
+              req.end();
+            });
+          }
+
+          function supabaseInsert(table, data) {
+            var body = JSON.stringify(Array.isArray(data) ? data : [data]);
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/' + table, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+                'Prefer': 'return=minimal',
+                'Content-Length': Buffer.byteLength(body).toString()
+              },
+              body: body
+            });
+          }
+
+          function supabaseDelete(table, daysOld) {
+            var cutoff = new Date(Date.now() - daysOld * 86400000).toISOString();
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/' + table + '?collected_at=lt.' + cutoff, {
+              method: 'DELETE',
+              headers: {
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
+              }
+            }).catch(function() {});
+          }
+
+          function callClaude(prompt) {
+            var body = JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 2000,
+              messages: [{ role: 'user', content: prompt }]
+            });
+            return httpFetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'Content-Length': Buffer.byteLength(body).toString()
+              },
+              body: body
+            }).then(function(r) { return r.json(); }).then(function(d) { return d.content[0].text; });
+          }
+
+          function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+          function parseJSON(t) { return JSON.parse(t.replace(/^```json\n?|\n?```$/g,'').trim()); }
+
+          // 1. GitHub Trending
+          function collectGitHubTrending() {
+            return httpFetch('https://github.com/trending', {
+              headers: { 'User-Agent': 'Mozilla/5.0' }
+            }).then(function(r) { return r.text(); }).then(function(html) {
+              var repos = [];
+              var repoRegex = /href="\/([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)"\s/g;
+              var descRegex = /<p class="col-9[^"]*"[^>]*>\s*(.*?)\s*<\/p>/gs;
+              var starsRegex = /aria-label="(\d[\d,]*) users starred/g;
+              var langRegex = /itemprop="programmingLanguage"[^>]*>\s*(.*?)\s*<\/span>/gs;
+              var todayRegex = /([\d,]+)\s+stars today/g;
+
+              var repoMatches = [], m;
+              while ((m = repoRegex.exec(html)) !== null && repos.length < 7) {
+                if (m[1].split('/').length === 2) repoMatches.push(m[1]);
+              }
+
+              var descs = [], d;
+              while ((d = descRegex.exec(html)) !== null && descs.length < 7) {
+                descs.push(d[1].replace(/<[^>]*>/g,'').trim());
+              }
+
+              var langs = [], l;
+              while ((l = langRegex.exec(html)) !== null && langs.length < 7) {
+                langs.push(l[1]);
+              }
+
+              var todays = [], t;
+              while ((t = todayRegex.exec(html)) !== null && todays.length < 7) {
+                todays.push(t[1] + ' stars today');
+              }
+
+              repoMatches.slice(0,7).forEach(function(repo, i) {
+                repos.push({
+                  name: repo,
+                  description: descs[i] || '',
+                  language: langs[i] || 'Unknown',
+                  stars: '',
+                  stars_today: todays[i] || '',
+                  url: 'https://github.com/' + repo
+                });
+              });
+
+              return repos;
+            }).catch(function(e) {
+              console.error('GitHub trending error:', e.message);
+              return [];
+            });
+          }
+
+          // 2. Reddit MRR + BIP
+          function collectRedditPosts() {
+            var subs = ['indiehackers', 'SaaS', 'webdev'];
+            return Promise.all(subs.map(function(sub) {
+              return httpFetch('https://www.reddit.com/r/' + sub + '/hot.json?limit=10', {
+                headers: { 'User-Agent': 'StillNotAThing/1.0' }
+              }).then(function(r) { return r.json(); }).then(function(d) {
+                return d.data.children.map(function(p) {
+                  return {
+                    title: p.data.title,
+                    text: (p.data.selftext || '').slice(0, 500),
+                    score: p.data.score,
+                    url: 'https://reddit.com' + p.data.permalink,
+                    sub: sub
+                  };
+                });
+              }).catch(function() { return []; });
+            })).then(function(results) {
+              return results.reduce(function(a, b) { return a.concat(b); }, []);
+            });
+          }
+
+          // 3. CVE/Security from GitHub Advisory
+          function collectSecurityAlerts() {
+            return httpFetch('https://api.github.com/advisories?per_page=10&type=reviewed', {
+              headers: {
+                'User-Agent': 'StillNotAThing/1.0',
+                'Accept': 'application/vnd.github+json'
+              }
+            }).then(function(r) { return r.json(); }).then(function(data) {
+              if (!Array.isArray(data)) return [];
+              var indieStack = ['next', 'react', 'node', 'express', 'prisma', 'supabase', 'vercel', 'stripe', 'clerk'];
+              return data.filter(function(a) {
+                var name = (a.ghsa_id + ' ' + (a.summary || '') + ' ' + JSON.stringify(a.vulnerabilities || [])).toLowerCase();
+                return indieStack.some(function(s) { return name.includes(s); });
+              }).slice(0, 5).map(function(a) {
+                return {
+                  title: a.summary || 'Security Advisory',
+                  description: (a.description || '').slice(0, 300),
+                  severity: (a.severity || 'MEDIUM').toUpperCase(),
+                  affected: (a.vulnerabilities || []).map(function(v) { return v.package && v.package.name; }).filter(Boolean).join(', '),
+                  cve_id: a.cve_id || a.ghsa_id,
+                  source_url: a.html_url || ''
+                };
+              });
+            }).catch(function(e) {
+              console.error('Security error:', e.message);
+              return [];
+            });
+          }
+
+          // 4. Claude濡� MRR/BIP/Opportunity 遺꾩꽍
+          function analyzeWithClaude(posts, trendingRepos) {
+            var topPosts = posts.filter(function(p) { return p.score > 20; })
+              .sort(function(a,b) { return b.score - a.score; })
+              .slice(0, 15);
+
+            var trendingStr = trendingRepos.slice(0,5).map(function(r) {
+              return r.name + ': ' + r.description + ' (' + r.stars_today + ')';
+            }).join('\n');
+
+            var postsStr = topPosts.map(function(p) {
+              return '[' + p.sub + '] "' + p.title + '" (' + p.score + ' upvotes)\n' + p.text.slice(0,100);
+            }).join('\n\n');
+
+            var prompt = 'Analyze these real Reddit posts and GitHub trending repos for StillNotAThing.com.'
+              + ' Extract: MRR milestones, build-in-public updates, and developer pain opportunities.'
+              + '\n\nReddit posts:\n' + postsStr
+              + '\n\nGitHub Trending:\n' + trendingStr
+              + '\n\nReturn ONLY valid JSON on one line with these arrays:'
+              + ' {"mrr_milestones":[{"amount":"$X MRR","title":"short title","description":"what they did and key insight","source":"r/subreddit"}],'
+              + '"bip_updates":[{"handle":"@username or source","content":"what they shared","metric":"key number or achievement","source":"reddit or github"}],'
+              + '"opportunities":[{"pain":"specific developer frustration","signal":"evidence with numbers","opportunity":"concrete product idea","potential":"HIGH or MEDIUM","tags":["tag1","tag2"],"mention_count":number}]}'
+              + ' Include only real data from the posts. Maximum 3 items per array. If no real MRR milestones found, return empty array.';
+
+            return callClaude(prompt).then(function(res) {
+              return parseJSON(res);
+            }).catch(function(e) {
+              console.error('Claude analysis error:', e.message);
+              return { mrr_milestones: [], bip_updates: [], opportunities: [] };
+            });
+          }
+
+          async function main() {
+            console.log('Starting data collection...');
+
+            // �ㅻ옒�� �곗씠�� �뺣━ (7�� �댁긽)
+            await Promise.all([
+              supabaseDelete('trending_repos', 2),
+              supabaseDelete('mrr_milestones', 7),
+              supabaseDelete('bip_updates', 3),
+              supabaseDelete('opportunities', 7)
+            ]);
+
+            // 蹂묐젹 �섏쭛
+            const [trendingRepos, redditPosts, securityAlerts] = await Promise.all([
+              collectGitHubTrending(),
+              collectRedditPosts(),
+              collectSecurityAlerts()
+            ]);
+
+            console.log('Trending repos:', trendingRepos.length);
+            console.log('Reddit posts:', redditPosts.length);
+            console.log('Security alerts:', securityAlerts.length);
+
+            // GitHub Trending ����
+            if (trendingRepos.length > 0) {
+              await supabaseInsert('trending_repos', trendingRepos);
+              console.log('Saved trending repos');
+            }
+
+            // Security Alerts ����
+            if (securityAlerts.length > 0) {
+              await supabaseInsert('security_alerts', securityAlerts);
+              console.log('Saved security alerts');
+            }
+
+            await sleep(1000);
+
+            // Claude濡� MRR/BIP/Opportunity 遺꾩꽍
+            const analysis = await analyzeWithClaude(redditPosts, trendingRepos);
+
+            if (analysis.mrr_milestones && analysis.mrr_milestones.length > 0) {
+              await supabaseInsert('mrr_milestones', analysis.mrr_milestones);
+              console.log('Saved MRR milestones:', analysis.mrr_milestones.length);
+            }
+
+            if (analysis.bip_updates && analysis.bip_updates.length > 0) {
+              await supabaseInsert('bip_updates', analysis.bip_updates);
+              console.log('Saved BIP updates:', analysis.bip_updates.length);
+            }
+
+            if (analysis.opportunities && analysis.opportunities.length > 0) {
+              await supabaseInsert('opportunities', analysis.opportunities);
+              console.log('Saved opportunities:', analysis.opportunities.length);
+            }
+
+            console.log('Data collection complete!');
+          }
+
+          main().catch(function(e) { console.error(e); process.exit(1); });
+          JSEOF
+          node collect.js
