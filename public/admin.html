@@ -187,6 +187,18 @@ header{background:rgba(10,10,15,.95);border-bottom:1px solid var(--border);paddi
     <div class="card" id="tools-container"><div class="loading">Loading...</div></div>
   </div>
 
+  <!-- REDDIT POSTS -->
+  <div class="section">
+    <div class="section-title">🔴 Reddit Post Generator</div>
+    <div class="card">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">오늘의 이슈 기반 레딧 게시글 초안. 복사해서 레딧에 붙여넣기!</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateRedditPosts()">✍️ Generate Today's Posts</button>
+      </div>
+      <div id="reddit-posts-container" style="margin-top:14px"></div>
+    </div>
+  </div>
+
   <!-- TOOL SUBMISSIONS -->
   <div class="section">
     <div class="section-title">➕ Pending Tool Submissions</div>
@@ -414,3 +426,117 @@ init();
 </script>
 </body>
 </html>
+<script>
+// ── REDDIT POST GENERATOR ──
+async function generateRedditPosts() {
+  const container = document.getElementById('reddit-posts-container');
+  container.innerHTML = '<div class="loading">Analyzing today\'s issues and generating posts...</div>';
+
+  try {
+    // 오늘의 데이터 가져오기
+    const [toolsRes, guidesRes] = await Promise.all([
+      sb.from('tools').select('*').order('rage', { ascending: false }).limit(3),
+      sb.from('guides').select('title,description,category').order('created_at', { ascending: false }).limit(3)
+    ]);
+
+    const tools = toolsRes.data || [];
+    const guides = guidesRes.data || [];
+
+    const topRage = tools[0];
+    const latestGuide = guides[0];
+
+    const subreddits = [
+      {
+        sub: 'r/webdev',
+        members: '1.2M',
+        type: 'discussion',
+        topic: topRage ? `${topRage.name} pricing/issues discussion` : 'dev tool discussion'
+      },
+      {
+        sub: 'r/indiehackers',
+        members: '500K',
+        type: 'resource',
+        topic: 'daily tool sentiment tracker'
+      },
+      {
+        sub: 'r/SaaS',
+        members: '200K',
+        type: 'guide',
+        topic: latestGuide ? latestGuide.title : 'SaaS tool guide'
+      },
+      {
+        sub: 'r/nextjs',
+        members: '100K',
+        type: 'fix',
+        topic: guides.find(g => g.title && g.title.toLowerCase().includes('next')) ? guides.find(g => g.title.toLowerCase().includes('next')).title : 'Next.js deployment tips'
+      },
+      {
+        sub: 'r/Supabase',
+        members: '50K',
+        type: 'guide',
+        topic: guides.find(g => g.category === 'database') ? guides.find(g => g.category === 'database').title : 'Supabase tips'
+      }
+    ];
+
+    const posts = [
+      {
+        sub: 'r/webdev',
+        members: '1.2M members',
+        title: topRage ? `Is anyone else frustrated with ${topRage.name} lately? Community sentiment is at ${topRage.rage}/10 rage` : 'Developer tool sentiment this week',
+        body: topRage ? `I've been tracking developer sentiment across Reddit, HN, and Twitter for a while now.\n\nThis week, ${topRage.name} has a rage score of ${topRage.rage}/10 — ${topRage.rage_note || 'community frustration is rising'}.\n\nFor context, happiness score is ${topRage.happiness}/10.\n\nAnyone else experiencing this? What are you switching to?\n\n[I track this daily at stillnotathing.com if anyone's curious]` : '',
+        link: 'https://stillnotathing.com/tools'
+      },
+      {
+        sub: 'r/indiehackers',
+        members: '500K members',
+        title: 'I built a daily dev tool sentiment tracker — shows what indie hackers are loving/hating today',
+        body: `Hey r/indiehackers!\n\nBuilt something I've been wanting for a while: a daily radar that shows what developers are actually feeling about the tools we use.\n\nToday's highlights:\n${tools.slice(0,3).map(t => `• ${t.name}: ${t.happiness}/10 happiness, ${t.rage}/10 rage ${t.trend === 'up' ? '↑' : t.trend === 'down' ? '↓' : '→'}`).join('\n')}\n\nAlso tracks HN stories, tool momentum, and potential market opportunities from developer pain points.\n\nstillnotathing.com — feedback welcome!`,
+        link: 'https://stillnotathing.com'
+      },
+      {
+        sub: 'r/SaaS',
+        members: '200K members',
+        title: latestGuide ? latestGuide.title : 'Developer tool guide',
+        body: latestGuide ? `${latestGuide.description}\n\nFull guide with code examples: stillnotathing.com\n\nHappy to answer questions in the comments!` : '',
+        link: 'https://stillnotathing.com/guides'
+      }
+    ];
+
+    container.innerHTML = posts.map((p, i) => `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="background:rgba(255,69,0,.1);color:#ff4500;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700">${p.sub}</span>
+            <span style="font-size:.65rem;color:var(--muted)">${p.members}</span>
+          </div>
+          <a href="https://reddit.com/${p.sub}/submit?title=${encodeURIComponent(p.title)}" target="_blank" style="background:#ff4500;color:#fff;padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:700;text-decoration:none">Post to Reddit →</a>
+        </div>
+        <div style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--text)">${p.title}</div>
+        <div style="background:var(--bg);border-radius:6px;padding:10px;font-size:.75rem;color:var(--muted);line-height:1.6;white-space:pre-wrap;margin-bottom:8px">${p.body}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="copyRedditPost(${i})" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:.72rem;cursor:pointer;font-family:DM Sans,sans-serif">📋 Copy post</button>
+          <button onclick="copyRedditTitle(${i})" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:.72rem;cursor:pointer;font-family:DM Sans,sans-serif">Copy title only</button>
+        </div>
+      </div>`).join('');
+
+    window._redditPosts = posts;
+    toast('Posts generated! 🎉');
+  } catch(e) {
+    container.innerHTML = '<div class="empty">Failed to generate posts. Try again.</div>';
+    console.error(e);
+  }
+}
+
+function copyRedditPost(idx) {
+  const p = window._redditPosts[idx];
+  const text = `${p.title}\n\n${p.body}\n\n${p.link}`;
+  navigator.clipboard.writeText(text);
+  toast('Post copied! Paste in Reddit ✓');
+}
+
+function copyRedditTitle(idx) {
+  const p = window._redditPosts[idx];
+  navigator.clipboard.writeText(p.title);
+  toast('Title copied! ✓');
+}
+</script>
