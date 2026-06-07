@@ -1,0 +1,187 @@
+name: Incident Monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for incidents and generate breaking articles
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          cat > monitor.js << 'JSEOF'
+          const https = require('https');
+
+          function httpFetch(url, opts) {
+            opts = opts || {};
+            return new Promise(function(resolve, reject) {
+              var u = new URL(url);
+              var req = https.request({
+                hostname: u.hostname,
+                path: u.pathname + u.search,
+                method: opts.method || 'GET',
+                headers: opts.headers || {}
+              }, function(res) {
+                var body = '';
+                res.on('data', function(c) { body += c; });
+                res.on('end', function() {
+                  resolve({
+                    ok: res.statusCode < 400,
+                    status: res.statusCode,
+                    json: function() { return Promise.resolve(JSON.parse(body)); },
+                    text: function() { return Promise.resolve(body); }
+                  });
+                });
+              });
+              req.on('error', reject);
+              if (opts.body) req.write(opts.body);
+              req.end();
+            });
+          }
+
+          function checkToolStatus() {
+            var tools = [
+              { name: 'Vercel', url: 'https://www.vercel-status.com/api/v2/summary.json' },
+              { name: 'Supabase', url: 'https://status.supabase.com/api/v2/summary.json' },
+              { name: 'Netlify', url: 'https://www.netlifystatus.com/api/v2/summary.json' },
+              { name: 'GitHub', url: 'https://www.githubstatus.com/api/v2/summary.json' },
+              { name: 'Stripe', url: 'https://status.stripe.com/api/v2/summary.json' },
+              { name: 'Cloudflare', url: 'https://www.cloudflarestatus.com/api/v2/summary.json' }
+            ];
+            var promises = tools.map(function(t) {
+              return httpFetch(t.url).then(function(r) {
+                return r.json();
+              }).then(function(d) {
+                var active = (d.incidents || []).filter(function(i) {
+                  return i.status !== 'resolved' && i.status !== 'postmortem';
+                });
+                if (active.length > 0) {
+                  return {
+                    tool: t.name,
+                    incident: active[0].name,
+                    status: active[0].status,
+                    impact: active[0].impact || 'unknown',
+                    id: active[0].id
+                  };
+                }
+                return null;
+              }).catch(function() { return null; });
+            });
+            return Promise.all(promises).then(function(results) {
+              return results.filter(function(r) { return r !== null; });
+            });
+          }
+
+          function checkAlreadyReported(incidentId) {
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides?title=ilike.BREAKING%25&order=created_at.desc&limit=20', {
+              headers: {
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
+              }
+            }).then(function(r) {
+              return r.json();
+            }).then(function(articles) {
+              return articles.some(function(a) {
+                return a.title && a.title.indexOf(incidentId) !== -1;
+              });
+            }).catch(function() { return false; });
+          }
+
+          function callClaude(prompt) {
+            var body = JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 2000,
+              messages: [{ role: 'user', content: prompt }]
+            });
+            return httpFetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'Content-Length': Buffer.byteLength(body).toString()
+              },
+              body: body
+            }).then(function(r) {
+              return r.json();
+            }).then(function(d) {
+              return d.content[0].text;
+            });
+          }
+
+          function saveArticle(article) {
+            var body = JSON.stringify(article);
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+                'Prefer': 'return=minimal',
+                'Content-Length': Buffer.byteLength(body).toString()
+              },
+              body: body
+            });
+          }
+
+          function main() {
+            return checkToolStatus().then(function(incidents) {
+              if (incidents.length === 0) {
+                console.log('All systems operational. No incidents detected.');
+                return;
+              }
+
+              console.log('Incidents detected: ' + incidents.length);
+
+              var chain = Promise.resolve();
+              incidents.forEach(function(inc) {
+                chain = chain.then(function() {
+                  return checkAlreadyReported(inc.id || inc.incident).then(function(alreadyReported) {
+                    if (alreadyReported) {
+                      console.log('Already reported: ' + inc.tool + ' - ' + inc.incident);
+                      return;
+                    }
+
+                    console.log('NEW incident: ' + inc.tool + ' - ' + inc.incident);
+
+                    var impactDesc = inc.impact === 'critical' ? 'CRITICAL �� widespread outage'
+                      : inc.impact === 'major' ? 'MAJOR �� significant disruption'
+                      : inc.impact === 'minor' ? 'MINOR �� partial disruption'
+                      : 'affecting some users';
+
+                    var prompt = 'Write a BREAKING incident report for StillNotAThing.com (daily resource for indie hackers).'
+                      + ' INCIDENT: ' + inc.tool + ' is experiencing "' + inc.incident + '" �� ' + impactDesc + ' (Status: ' + inc.status + ')'
+                      + ' Write as if you are a senior developer who just discovered this and wants to warn the community immediately.'
+                      + ' Include: 1) What is down and who is affected, 2) Immediate workarounds indie hackers can use RIGHT NOW, 3) How to check if your project is affected, 4) ETA if known, 5) Alternative tools to consider.'
+                      + ' Tone: urgent but calm. No panic. Just facts + fixes.'
+                      + ' 400-600 words.'
+                      + ' Return ONLY valid JSON on one line: {"title":"BREAKING: ' + inc.tool + ' ' + inc.status + ' �� workarounds inside","description":"' + inc.tool + ' is experiencing ' + inc.incident + '. Here are immediate workarounds for indie hackers.","content":"full markdown article","category":"devtools","read_time":"3 min read","tags":["' + inc.tool.toLowerCase() + '","outage","breaking","' + inc.id + '"]}';
+
+                    return callClaude(prompt).then(function(res) {
+                      var clean = res.replace(/^```json\n?|\n?```$/g, '').trim();
+                      return saveArticle(JSON.parse(clean));
+                    }).then(function() {
+                      console.log('BREAKING article published: ' + inc.tool);
+                    }).catch(function(e) {
+                      console.error('Failed: ' + e.message);
+                    });
+                  });
+                });
+              });
+
+              return chain;
+            });
+          }
+
+          main().catch(function(e) {
+            console.error(e);
+            process.exit(1);
+          });
+          JSEOF
+          node monitor.js
