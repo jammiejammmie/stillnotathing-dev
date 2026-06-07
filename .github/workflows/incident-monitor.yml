@@ -47,13 +47,39 @@ jobs:
 
           function checkToolStatus() {
             var tools = [
-              { name: 'Vercel', url: 'https://www.vercel-status.com/api/v2/summary.json' },
-              { name: 'Supabase', url: 'https://status.supabase.com/api/v2/summary.json' },
-              { name: 'Netlify', url: 'https://www.netlifystatus.com/api/v2/summary.json' },
-              { name: 'GitHub', url: 'https://www.githubstatus.com/api/v2/summary.json' },
-              { name: 'Stripe', url: 'https://status.stripe.com/api/v2/summary.json' },
-              { name: 'Cloudflare', url: 'https://www.cloudflarestatus.com/api/v2/summary.json' }
+              // �몄뒪��
+              { name: 'Vercel', url: 'https://www.vercel-status.com/api/v2/summary.json', cat: 'hosting' },
+              { name: 'Netlify', url: 'https://www.netlifystatus.com/api/v2/summary.json', cat: 'hosting' },
+              { name: 'Railway', url: 'https://status.railway.app/api/v2/summary.json', cat: 'hosting' },
+              { name: 'Render', url: 'https://status.render.com/api/v2/summary.json', cat: 'hosting' },
+              { name: 'Fly.io', url: 'https://status.flyio.net/api/v2/summary.json', cat: 'hosting' },
+              // �곗씠�곕쿋�댁뒪
+              { name: 'Supabase', url: 'https://status.supabase.com/api/v2/summary.json', cat: 'database' },
+              { name: 'PlanetScale', url: 'https://www.planetscalestatus.com/api/v2/summary.json', cat: 'database' },
+              { name: 'Neon', url: 'https://neonstatus.com/api/v2/summary.json', cat: 'database' },
+              { name: 'MongoDB Atlas', url: 'https://status.mongodb.com/api/v2/summary.json', cat: 'database' },
+              // 寃곗젣
+              { name: 'Stripe', url: 'https://status.stripe.com/api/v2/summary.json', cat: 'payments' },
+              { name: 'Paddle', url: 'https://status.paddle.com/api/v2/summary.json', cat: 'payments' },
+              { name: 'LemonSqueezy', url: 'https://status.lemonsqueezy.com/api/v2/summary.json', cat: 'payments' },
+              // �명봽��
+              { name: 'Cloudflare', url: 'https://www.cloudflarestatus.com/api/v2/summary.json', cat: 'infra' },
+              { name: 'AWS', url: 'https://status.aws.amazon.com/api/v2/summary.json', cat: 'infra' },
+              { name: 'GitHub', url: 'https://www.githubstatus.com/api/v2/summary.json', cat: 'devtools' },
+              // �몄쬆/�대찓��
+              { name: 'Clerk', url: 'https://status.clerk.com/api/v2/summary.json', cat: 'auth' },
+              { name: 'Auth0', url: 'https://status.auth0.com/api/v2/summary.json', cat: 'auth' },
+              { name: 'Resend', url: 'https://status.resend.com/api/v2/summary.json', cat: 'email' },
+              { name: 'SendGrid', url: 'https://status.sendgrid.com/api/v2/summary.json', cat: 'email' },
+              // AI
+              { name: 'OpenAI', url: 'https://status.openai.com/api/v2/summary.json', cat: 'ai' },
+              { name: 'Anthropic', url: 'https://status.anthropic.com/api/v2/summary.json', cat: 'ai' },
+              // 湲고�
+              { name: 'Sentry', url: 'https://status.sentry.io/api/v2/summary.json', cat: 'monitoring' },
+              { name: 'Upstash', url: 'https://status.upstash.com/api/v2/summary.json', cat: 'database' },
+              { name: 'Algolia', url: 'https://status.algolia.com/api/v2/summary.json', cat: 'search' }
             ];
+
             var promises = tools.map(function(t) {
               return httpFetch(t.url).then(function(r) {
                 return r.json();
@@ -64,6 +90,7 @@ jobs:
                 if (active.length > 0) {
                   return {
                     tool: t.name,
+                    cat: t.cat,
                     incident: active[0].name,
                     status: active[0].status,
                     impact: active[0].impact || 'unknown',
@@ -73,13 +100,14 @@ jobs:
                 return null;
               }).catch(function() { return null; });
             });
+
             return Promise.all(promises).then(function(results) {
               return results.filter(function(r) { return r !== null; });
             });
           }
 
           function checkAlreadyReported(incidentId) {
-            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides?title=ilike.BREAKING%25&order=created_at.desc&limit=20', {
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides?title=ilike.BREAKING%25&order=created_at.desc&limit=50', {
               headers: {
                 'apikey': process.env.SUPABASE_SERVICE_KEY,
                 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
@@ -133,22 +161,20 @@ jobs:
           function main() {
             return checkToolStatus().then(function(incidents) {
               if (incidents.length === 0) {
-                console.log('All systems operational. No incidents detected.');
+                console.log('All ' + 24 + ' tools operational. No incidents.');
                 return;
               }
 
-              console.log('Incidents detected: ' + incidents.length);
+              console.log(incidents.length + ' incident(s) detected!');
 
               var chain = Promise.resolve();
               incidents.forEach(function(inc) {
                 chain = chain.then(function() {
                   return checkAlreadyReported(inc.id || inc.incident).then(function(alreadyReported) {
                     if (alreadyReported) {
-                      console.log('Already reported: ' + inc.tool + ' - ' + inc.incident);
+                      console.log('Already reported: ' + inc.tool);
                       return;
                     }
-
-                    console.log('NEW incident: ' + inc.tool + ' - ' + inc.incident);
 
                     var impactDesc = inc.impact === 'critical' ? 'CRITICAL �� widespread outage'
                       : inc.impact === 'major' ? 'MAJOR �� significant disruption'
@@ -157,19 +183,19 @@ jobs:
 
                     var prompt = 'Write a BREAKING incident report for StillNotAThing.com (daily resource for indie hackers).'
                       + ' INCIDENT: ' + inc.tool + ' is experiencing "' + inc.incident + '" �� ' + impactDesc + ' (Status: ' + inc.status + ')'
-                      + ' Write as if you are a senior developer who just discovered this and wants to warn the community immediately.'
-                      + ' Include: 1) What is down and who is affected, 2) Immediate workarounds indie hackers can use RIGHT NOW, 3) How to check if your project is affected, 4) ETA if known, 5) Alternative tools to consider.'
-                      + ' Tone: urgent but calm. No panic. Just facts + fixes.'
+                      + ' Write as a senior developer warning the community immediately.'
+                      + ' Include: 1) What is down and who is affected 2) Immediate workarounds RIGHT NOW 3) How to check if your project is affected 4) Alternative tools to consider 5) How to monitor recovery.'
+                      + ' Tone: urgent but calm. Facts + fixes only. No panic.'
                       + ' 400-600 words.'
-                      + ' Return ONLY valid JSON on one line: {"title":"BREAKING: ' + inc.tool + ' ' + inc.status + ' �� workarounds inside","description":"' + inc.tool + ' is experiencing ' + inc.incident + '. Here are immediate workarounds for indie hackers.","content":"full markdown article","category":"devtools","read_time":"3 min read","tags":["' + inc.tool.toLowerCase() + '","outage","breaking","' + inc.id + '"]}';
+                      + ' Return ONLY valid JSON on one line: {"title":"BREAKING: ' + inc.tool + ' ' + impactDesc.split(' ')[0] + ' �� workarounds inside [' + (inc.id || 'inc') + ']","description":"' + inc.tool + ' is down: ' + inc.incident + '. Immediate workarounds for indie hackers.","content":"full markdown","category":"' + inc.cat + '","read_time":"3 min read","tags":["' + inc.tool.toLowerCase().replace(/ /g,'-') + '","outage","breaking","incident"]}';
 
                     return callClaude(prompt).then(function(res) {
                       var clean = res.replace(/^```json\n?|\n?```$/g, '').trim();
                       return saveArticle(JSON.parse(clean));
                     }).then(function() {
-                      console.log('BREAKING article published: ' + inc.tool);
+                      console.log('BREAKING published: ' + inc.tool + ' - ' + inc.incident);
                     }).catch(function(e) {
-                      console.error('Failed: ' + e.message);
+                      console.error('Failed ' + inc.tool + ': ' + e.message);
                     });
                   });
                 });
