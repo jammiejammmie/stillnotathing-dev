@@ -6,10 +6,15 @@
 <title>StillNotAThing — Developer Morning Page</title>
 <meta name="description" content="Daily dev resources, tool scorecards, HN stories, and guides for indie hackers and solo builders.">
 <meta property="og:title" content="StillNotAThing — Developer Morning Page">
-<meta property="og:description" content="Tools, guides, and curated HN stories for indie hackers and solo builders.">
-<meta property="og:image" content="https://stillnotathing.com/og.png">
+<meta property="og:description" content="See what indie hackers are using, loving, and raging about today. Daily tool scores, HN stories, and guides.">
+<meta property="og:image" content="https://stillnotathing.com/.netlify/functions/og-image?type=pain">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:url" content="https://stillnotathing.com">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://stillnotathing.com/.netlify/functions/og-image?type=pain">
+<meta name="twitter:title" content="StillNotAThing — Developer Morning Page">
+<meta name="twitter:description" content="See what indie hackers are using, loving, and raging about today.">
 <link rel="canonical" href="https://stillnotathing.com">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -261,8 +266,8 @@ footer a{color:var(--accent);text-decoration:none}
   <!-- PAIN RADAR -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">🔥 Pain Radar</div>
-      <span class="section-more" onclick="showPage('tools')">all tools →</span>
+      <div class="section-title">🔥 Pain Radar — what devs are raging about</div>
+      <span class="section-more" onclick="sharePainRadar()" style="color:var(--muted)">↗ share</span>
     </div>
     <div id="pain-radar-container"><div class="loading">Loading...</div></div>
   </div>
@@ -789,7 +794,7 @@ function renderGuideCard(g) {
       <div class="guide-title">${g.title}</div>
       <div class="guide-desc">${g.description||''}</div>
       <div class="guide-meta">
-        <span>${g.read_time||'5 min'} read</span>
+        <span>${(g.read_time||'5 min read').replace(' read read',' read')}</span>
         ${g.tags?g.tags.map(tag=>`<span>#${tag}</span>`).join(''):''}
       </div>
     </div>`;
@@ -992,6 +997,96 @@ window.initGiscus = function() {
   el.appendChild(script);
 };
 </script>
+
+<script>
+// ── DYNAMIC OG TAGS ──
+function updateOGTags(title, description, imageType, imageParams) {
+  const base = 'https://stillnotathing.com';
+  const imgUrl = `${base}/.netlify/functions/og-image?type=${imageType}${imageParams||''}`;
+  
+  document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
+  document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+  document.querySelector('meta[property="og:image"]')?.setAttribute('content', imgUrl);
+  document.querySelector('meta[name="twitter:card"]')?.setAttribute('content', 'summary_large_image');
+  
+  // Add twitter image meta if not exists
+  if (!document.querySelector('meta[name="twitter:image"]')) {
+    const meta = document.createElement('meta');
+    meta.name = 'twitter:image';
+    meta.content = imgUrl;
+    document.head.appendChild(meta);
+  } else {
+    document.querySelector('meta[name="twitter:image"]').setAttribute('content', imgUrl);
+  }
+}
+
+// 가이드 상세 열릴 때 OG 업데이트
+const _origOpenGuide = window.openGuide;
+window.openGuide = async function(id) {
+  if (_origOpenGuide) {
+    await _origOpenGuide(id);
+    // 가이드 OG 태그 업데이트
+    setTimeout(async function() {
+      try {
+        const { data } = await sb.from('guides').select('title,description').eq('id', id).single();
+        if (data) {
+          const encodedTitle = encodeURIComponent((data.title||'').slice(0,80));
+          const imgUrl = 'https://stillnotathing.com/.netlify/functions/og-image?type=guide&title=' + encodedTitle;
+          document.querySelector('meta[property="og:title"]').setAttribute('content', data.title + ' — StillNotAThing');
+          document.querySelector('meta[property="og:description"]').setAttribute('content', data.description || '');
+          document.querySelector('meta[property="og:image"]').setAttribute('content', imgUrl);
+          document.querySelector('meta[name="twitter:image"]') && document.querySelector('meta[name="twitter:image"]').setAttribute('content', imgUrl);
+          history.replaceState({}, '', '/?guide=' + id);
+        }
+      } catch(e) {}
+    }, 300);
+  }
+};
+
+// ── CLIPBOARD "via stillnotathing" ──
+document.addEventListener('copy', function(e) {
+  const selection = window.getSelection();
+  if (!selection || selection.toString().length < 20) return;
+  const original = selection.toString();
+  const modified = original + '\n\nvia stillnotathing.com';
+  e.clipboardData.setData('text/plain', modified);
+  e.preventDefault();
+});
+
+// ── SHARE FUNCTIONS WITH OG ──
+function shareWithOG(type, title, description, url, imageParams) {
+  updateOGTags(title, description, type, imageParams);
+  const shareUrl = url || 'https://stillnotathing.com';
+  if (navigator.share) {
+    navigator.share({ title, text: description, url: shareUrl });
+  } else {
+    navigator.clipboard.writeText(shareUrl);
+    toast('Link copied! ✓');
+  }
+}
+
+function sharePainRadar() {
+  shareWithOG(
+    'pain',
+    '🔥 Developer Pain Radar — StillNotAThing',
+    'See what developers are raging about today. Daily sentiment tracker for indie hackers.',
+    'https://stillnotathing.com',
+    ''
+  );
+}
+
+function shareOpportunityWithOG(pain, opportunity) {
+  const encodedTitle = encodeURIComponent(pain.slice(0, 60));
+  shareWithOG(
+    'opportunity',
+    '💡 Developer Opportunity — StillNotAThing',
+    `Pain: "${pain}" — See the opportunity this creates.`,
+    'https://stillnotathing.com',
+    `&title=${encodedTitle}`
+  );
+}
+</script>
+
 </body>
 </html>
 <script>
@@ -1169,10 +1264,28 @@ function shareGuide(id, title) {
   }
 }
 
-// URL에서 guide ID 체크
-const guideParam = new URLSearchParams(window.location.search).get('guide');
-if (guideParam) {
-  window.addEventListener('load', () => setTimeout(() => openGuide(guideParam), 500));
+// URL에서 guide/hn ID 체크
+const _urlParams = new URLSearchParams(window.location.search);
+const _guideParam = _urlParams.get('guide');
+const _hnParam = _urlParams.get('hn');
+
+if (_guideParam) {
+  // 페이지 로드 + Supabase 초기화 후 열기
+  const _openWhenReady = setInterval(function() {
+    if (typeof openGuide === 'function' && typeof sb !== 'undefined') {
+      clearInterval(_openWhenReady);
+      setTimeout(function() { openGuide(_guideParam); }, 300);
+    }
+  }, 100);
+}
+
+if (_hnParam) {
+  const _openHNWhenReady = setInterval(function() {
+    if (typeof loadHNStoryPage === 'function') {
+      clearInterval(_openHNWhenReady);
+      setTimeout(function() { loadHNStoryPage(parseInt(_hnParam)); }, 300);
+    }
+  }, 100);
 }
 </script>
 <script>
@@ -1185,7 +1298,7 @@ function renderPainRadar(tools) {
     const rageColor = t.rage >= 7 ? 'var(--down)' : t.rage >= 5 ? 'var(--warn)' : 'var(--muted)';
     const rageEmoji = t.rage >= 7 ? '🚨' : t.rage >= 5 ? '⚠️' : '😤';
     return `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div onclick="showPage('tools')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);width:16px">#${i+1}</div>
         <div style="font-size:.9rem">${t.emoji||'🔧'}</div>
         <div style="flex:1">
