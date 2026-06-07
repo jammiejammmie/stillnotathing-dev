@@ -915,6 +915,11 @@ function loadProfilePage() {
       </div>
     </div>
 
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:10px">🎖️ Achievements & Stats</div>
+      <button onclick="showStackCard()" style="width:100%;background:var(--surface);border:1px solid rgba(0,212,170,.3);color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;font-size:.82rem;margin-bottom:8px">📛 My Stack Card →</button>
+      <button onclick="showLeaderboard()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;font-size:.82rem">View My Stats & Achievements →</button>
+    </div>
     <div class="badge-section">
       <div class="badge-title">📛 Your Stack Badge</div>
       <div class="badge-code">[![StillNotAThing](${badgeUrl}.svg)](https://stillnotathing.com)</div>
@@ -971,7 +976,9 @@ async function init() {
       userReadHistory = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
       await loadUserBookmarks();
       checkStreak();
+      checkAchievements(session.user.id);
       toast(`Welcome, ${session.user.user_metadata?.name || 'developer'}! 👋`);
+      setTimeout(showOnboarding, 1000);
     } else {
       currentUser = null;
       updateAuthUI();
@@ -1107,7 +1114,7 @@ function renderPainRadar(tools) {
     const rageColor = t.rage >= 7 ? 'var(--down)' : t.rage >= 5 ? 'var(--warn)' : 'var(--muted)';
     const rageEmoji = t.rage >= 7 ? '🚨' : t.rage >= 5 ? '⚠️' : '😤';
     return `
-      <div onclick="showPage('tools')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s">
+      <div onclick="showPainDetail('${t.name}',${t.rage},'${(t.rage_note||'')}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--down)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted);width:16px">#${i+1}</div>
         <div style="font-size:.9rem">${t.emoji||'🔧'}</div>
         <div style="flex:1">
@@ -1191,6 +1198,338 @@ async function renderOpportunityFeed(tools) {
     c.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.8rem">Could not load opportunities.</div>';
   }
 }
+
+// ── ACHIEVEMENTS ──
+const ACHIEVEMENTS = [
+  { id: 'first_vote', icon: '🗳️', title: 'First Vote', desc: 'Voted on a tool for the first time' },
+  { id: 'first_bookmark', icon: '🔖', title: 'Bookmarker', desc: 'Saved your first article' },
+  { id: 'streak_3', icon: '🔥', title: '3-Day Streak', desc: 'Visited 3 days in a row' },
+  { id: 'streak_7', icon: '⚡', title: 'Week Warrior', desc: 'Visited 7 days in a row' },
+  { id: 'streak_30', icon: '🏆', title: 'Month Master', desc: '30-day streak achieved' },
+  { id: 'read_5', icon: '📚', title: 'Avid Reader', desc: 'Read 5 articles' },
+  { id: 'read_20', icon: '🧠', title: 'Knowledge Seeker', desc: 'Read 20 articles' },
+  { id: 'subscriber', icon: '📬', title: 'Subscriber', desc: 'Subscribed to the newsletter' }
+];
+
+function checkAchievements(userId) {
+  if (!userId) return;
+  const key = `achievements_${userId}`;
+  const earned = JSON.parse(localStorage.getItem(key) || '[]');
+  const streak = JSON.parse(localStorage.getItem(`streak_${userId}`) || '{"count":0}');
+  const reads = JSON.parse(localStorage.getItem(`read_${userId}`) || '[]').length;
+  const bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${userId}`) || '[]').length;
+  const votes = Object.keys(JSON.parse(localStorage.getItem(`votes_${userId}`) || '{}')).length;
+
+  const newEarned = [];
+  if (votes >= 1 && !earned.includes('first_vote')) newEarned.push('first_vote');
+  if (bookmarks >= 1 && !earned.includes('first_bookmark')) newEarned.push('first_bookmark');
+  if (streak.count >= 3 && !earned.includes('streak_3')) newEarned.push('streak_3');
+  if (streak.count >= 7 && !earned.includes('streak_7')) newEarned.push('streak_7');
+  if (streak.count >= 30 && !earned.includes('streak_30')) newEarned.push('streak_30');
+  if (reads >= 5 && !earned.includes('read_5')) newEarned.push('read_5');
+  if (reads >= 20 && !earned.includes('read_20')) newEarned.push('read_20');
+
+  newEarned.forEach(id => {
+    earned.push(id);
+    const a = ACHIEVEMENTS.find(a => a.id === id);
+    if (a) {
+      setTimeout(() => {
+        toast(`${a.icon} Achievement unlocked: ${a.title}!`, 4000);
+      }, 1000);
+    }
+  });
+
+  localStorage.setItem(key, JSON.stringify(earned));
+  return earned;
+}
+
+// ── PAIN RADAR DETAIL ──
+async function showPainDetail(toolName, rage, rageNote) {
+  const overlay = document.createElement('div');
+  overlay.id = 'pain-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:flex;align-items:flex-end;justify-content:center;';
+  
+  // 관련 가이드 찾기
+  let relatedGuides = [];
+  try {
+    const { data } = await sb.from('guides')
+      .select('id,title,description,read_time')
+      .ilike('title', `%${toolName}%`)
+      .order('created_at', { ascending: false })
+      .limit(3);
+    relatedGuides = data || [];
+  } catch(e) {}
+
+  // 대안 툴
+  const alternatives = {
+    'PlanetScale': ['Supabase', 'Neon', 'Railway Postgres'],
+    'Vercel': ['Netlify', 'Railway', 'Cloudflare Pages'],
+    'Netlify': ['Vercel', 'Railway', 'Cloudflare Pages'],
+    'Stripe': ['Paddle', 'LemonSqueezy'],
+    'Heroku': ['Railway', 'Render', 'Fly.io']
+  };
+  const alts = alternatives[toolName] || [];
+
+  overlay.innerHTML = `
+    <div style="background:var(--card);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px;max-width:700px;width:100%;max-height:80vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--down)">🔥 Why devs are angry at ${toolName}</div>
+          <div style="font-family:JetBrains Mono,monospace;font-size:.7rem;color:var(--muted);margin-top:3px">Rage score: ${rage}/10</div>
+        </div>
+        <button onclick="document.getElementById('pain-overlay').remove()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif">✕</button>
+      </div>
+
+      ${rageNote ? `
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px;margin-bottom:16px">
+        <div style="font-size:.85rem;font-weight:600;color:var(--down);margin-bottom:4px">🚨 Community Signal</div>
+        <div style="font-size:.82rem;color:var(--muted)">${rageNote}</div>
+      </div>` : ''}
+
+      ${alts.length > 0 ? `
+      <div style="margin-bottom:16px">
+        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">💡 Alternatives developers are switching to</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${alts.map(a => `<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.2);color:var(--accent);padding:5px 12px;border-radius:6px;font-size:.78rem;font-weight:500">${a}</span>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${relatedGuides.length > 0 ? `
+      <div>
+        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">📖 Related guides on StillNotAThing</div>
+        ${relatedGuides.map(g => `
+          <div onclick="document.getElementById('pain-overlay').remove();openGuide('${g.id}')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer">
+            <div style="font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:3px">${g.title}</div>
+            <div style="font-size:.72rem;color:var(--muted)">${g.read_time||'5 min'} read →</div>
+          </div>`).join('')}
+      </div>` : `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;color:var(--muted);font-size:.78rem">
+        Guides about ${toolName} are being generated. Check back soon!
+      </div>`}
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px">
+        <button onclick="showPage('tools');document.getElementById('pain-overlay').remove()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">See full scores →</button>
+        <button onclick="navigator.share?navigator.share({title:'${toolName} rage at ${rage}/10',url:'https://stillnotathing.com'}):navigator.clipboard.writeText('https://stillnotathing.com')" style="background:var(--accent);border:none;color:#000;padding:8px 16px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:700">↗ Share</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ── LEADERBOARD ──
+function showLeaderboard() {
+  const overlay = document.createElement('div');
+  overlay.id = 'leaderboard-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:flex;align-items:center;justify-content:center;padding:20px;';
+  
+  // 로컬 데이터 기반 (실제로는 서버에서 가져와야 하지만 일단 로컬)
+  const myStreak = currentUser ? JSON.parse(localStorage.getItem(`streak_${currentUser.id}`) || '{"count":0}').count : 0;
+  const myReads = currentUser ? JSON.parse(localStorage.getItem(`read_${currentUser.id}`) || '[]').length : 0;
+
+  overlay.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:400px;width:100%">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:1rem;font-weight:700">🏆 Your Stats</div>
+        <button onclick="document.getElementById('leaderboard-overlay').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
+      </div>
+      ${currentUser ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+          <div style="font-family:JetBrains Mono,monospace;font-size:1.8rem;font-weight:700;color:var(--warn)">🔥${myStreak}</div>
+          <div style="font-size:.65rem;color:var(--muted)">day streak</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+          <div style="font-family:JetBrains Mono,monospace;font-size:1.8rem;font-weight:700;color:var(--accent)">${myReads}</div>
+          <div style="font-size:.65rem;color:var(--muted)">articles read</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px">🎖️ Your Achievements</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${(checkAchievements(currentUser.id)||[]).map(id => {
+            const a = ACHIEVEMENTS.find(a => a.id === id);
+            return a ? `<span title="${a.desc}" style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);padding:4px 10px;border-radius:20px;font-size:.75rem">${a.icon} ${a.title}</span>` : '';
+          }).join('') || '<span style="color:var(--muted);font-size:.78rem">No achievements yet. Keep reading!</span>'}
+        </div>
+      </div>` : '<div style="text-align:center;color:var(--muted);padding:20px">Sign in with GitHub to track your stats!</div>'}
+      <button onclick="document.getElementById('leaderboard-overlay').remove()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:7px;cursor:pointer;font-family:DM Sans,sans-serif">Close</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+
+// ── MY STACK (온보딩 + 맞춤 피드) ──
+const STACK_TOOLS = [
+  { id: 'vercel', name: 'Vercel', emoji: '⬡', cat: 'hosting' },
+  { id: 'netlify', name: 'Netlify', emoji: '🌐', cat: 'hosting' },
+  { id: 'railway', name: 'Railway', emoji: '🚂', cat: 'hosting' },
+  { id: 'supabase', name: 'Supabase', emoji: '🗄', cat: 'database' },
+  { id: 'planetscale', name: 'PlanetScale', emoji: '🪐', cat: 'database' },
+  { id: 'stripe', name: 'Stripe', emoji: '💳', cat: 'payments' },
+  { id: 'clerk', name: 'Clerk', emoji: '🔑', cat: 'auth' },
+  { id: 'resend', name: 'Resend', emoji: '📧', cat: 'email' },
+  { id: 'nextjs', name: 'Next.js', emoji: '▲', cat: 'framework' },
+  { id: 'react', name: 'React', emoji: '⚛️', cat: 'framework' },
+  { id: 'github', name: 'GitHub', emoji: '⚙', cat: 'devtools' },
+  { id: 'cursor', name: 'Cursor', emoji: '🖱️', cat: 'ai' },
+  { id: 'cloudflare', name: 'Cloudflare', emoji: '☁️', cat: 'infra' },
+  { id: 'aws', name: 'AWS', emoji: '🟧', cat: 'infra' }
+];
+
+function getMyStack() {
+  if (!currentUser) return [];
+  return JSON.parse(localStorage.getItem(`stack_${currentUser.id}`) || '[]');
+}
+
+function saveMyStack(stack) {
+  if (!currentUser) return;
+  localStorage.setItem(`stack_${currentUser.id}`, JSON.stringify(stack));
+}
+
+function showOnboarding() {
+  if (!currentUser) return;
+  const key = `onboarded_${currentUser.id}`;
+  if (localStorage.getItem(key)) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'onboarding-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  const selected = new Set();
+
+  overlay.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:2rem;margin-bottom:8px">⚡</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:6px">What's your stack?</div>
+        <div style="font-size:.82rem;color:var(--muted)">We'll personalize your feed based on the tools you use</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px" id="stack-grid">
+        ${STACK_TOOLS.map(t => `
+          <div onclick="toggleStackTool('${t.id}',this)" id="stool_${t.id}" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s">
+            <span style="font-size:1rem">${t.emoji}</span>
+            <div>
+              <div style="font-size:.82rem;font-weight:600">${t.name}</div>
+              <div style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">${t.cat}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <button onclick="finishOnboarding()" style="width:100%;background:var(--accent);border:none;color:#000;padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:DM Sans,sans-serif">Set my stack →</button>
+      <button onclick="skipOnboarding()" style="width:100%;background:none;border:none;color:var(--muted);padding:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;margin-top:6px">Skip for now</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+}
+
+function toggleStackTool(id, el) {
+  const myStack = getMyStack();
+  const idx = myStack.indexOf(id);
+  if (idx === -1) {
+    myStack.push(id);
+    el.style.background = 'rgba(0,212,170,.1)';
+    el.style.borderColor = 'var(--accent)';
+  } else {
+    myStack.splice(idx, 1);
+    el.style.background = 'var(--surface)';
+    el.style.borderColor = 'var(--border)';
+  }
+  saveMyStack(myStack);
+}
+
+function finishOnboarding() {
+  if (!currentUser) return;
+  localStorage.setItem(`onboarded_${currentUser.id}`, '1');
+  document.getElementById('onboarding-overlay')?.remove();
+  toast('Stack saved! Your feed is now personalized 🎉');
+  loadHome(); // 피드 새로고침
+}
+
+function skipOnboarding() {
+  if (!currentUser) return;
+  localStorage.setItem(`onboarded_${currentUser.id}`, '1');
+  document.getElementById('onboarding-overlay')?.remove();
+}
+
+// ── STACK CARD ──
+function showStackCard() {
+  if (!currentUser) { toast('Sign in to create your stack card'); return; }
+  const myStack = getMyStack();
+  const username = currentUser.user_metadata?.user_name || 'developer';
+  const stackTools = STACK_TOOLS.filter(t => myStack.includes(t.id));
+
+  const overlay = document.createElement('div');
+  overlay.id = 'stackcard-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  overlay.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:400px;width:100%">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:16px">📛 Your Stack Card</div>
+      
+      <div style="background:linear-gradient(135deg,#13131f,#0a0a0f);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:var(--muted);margin-bottom:8px">// StillNotAThing Stack Card</div>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:4px">@${username}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
+          ${stackTools.length > 0 
+            ? stackTools.map(t => `<span style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.15);color:var(--accent);padding:3px 8px;border-radius:4px;font-size:.72rem;font-family:JetBrains Mono,monospace">${t.emoji} ${t.name}</span>`).join('')
+            : '<span style="color:var(--muted);font-size:.78rem">No tools selected yet</span>'}
+        </div>
+        <div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--muted)">stillnotathing.com</div>
+      </div>
+
+      ${myStack.length === 0 ? `
+      <button onclick="document.getElementById('stackcard-overlay').remove();localStorage.removeItem('onboarded_${currentUser.id}');showOnboarding()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:8px">+ Set my stack first</button>` : ''}
+
+      <div style="display:flex;gap:8px">
+        <button onclick="shareStackCard('${username}')" style="flex:1;background:var(--accent);border:none;color:#000;padding:10px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:DM Sans,sans-serif">↗ Share card</button>
+        <button onclick="copyReadmeBadge('${username}')" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:10px 14px;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem">Copy README</button>
+      </div>
+      <button onclick="document.getElementById('stackcard-overlay').remove()" style="width:100%;background:none;border:none;color:var(--muted);padding:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-size:.78rem;margin-top:6px">Close</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+}
+
+function shareStackCard(username) {
+  const url = `https://stillnotathing.com/badge.html?user=${username}`;
+  if (navigator.share) {
+    navigator.share({ title: 'My dev stack on StillNotAThing', url });
+  } else {
+    navigator.clipboard.writeText(url);
+    toast('Stack card link copied! ✓');
+  }
+}
+
+function copyReadmeBadge(username) {
+  const badge = `[![My Stack](https://stillnotathing.com/.netlify/functions/badge?type=devcard&user=${username})](https://stillnotathing.com/badge.html?user=${username})`;
+  navigator.clipboard.writeText(badge);
+  toast('README badge copied! Paste in your GitHub README 🎉');
+}
+
+// ── PERSONALIZED GUIDE LOADING ──
+async function loadPersonalizedGuides(limit) {
+  const myStack = getMyStack();
+  if (myStack.length === 0) return loadGuides(limit);
+  
+  try {
+    // 내 스택 툴 관련 가이드 먼저
+    const toolNames = STACK_TOOLS.filter(t => myStack.includes(t.id)).map(t => t.name);
+    const orFilter = toolNames.map(n => `title.ilike.%${n}%`).join(',');
+    
+    const { data: personalized } = await sb.from('guides')
+      .select('*')
+      .or(orFilter)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (personalized && personalized.length > 0) return personalized;
+  } catch(e) {}
+  
+  return loadGuides(limit);
+}
+
 </script>
 </body>
 </html>
