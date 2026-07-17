@@ -77,12 +77,19 @@ function injectBody(html, ssrHtml) {
 }
 
 exports.handler = async function (event) {
-  // Routed via netlify.toml as /.netlify/functions/page-meta/<mode>[/<id>]
-  // (path segments, not a query string — a query string appended to a
-  // redirect's "to" target was silently ignored by Netlify's rewrite engine).
+  // Routed via netlify.toml as:
+  //   /tools          -> /.netlify/functions/page-meta/tools
+  //   /guides*        -> /.netlify/functions/page-meta/guides/:splat
+  // (/guides and /guides/:id used to be two separate redirect rules, but
+  // Netlify's rewrite engine kept preferring the bare /guides rule even for
+  // /guides/<id> requests when both rules shared that prefix - collapsing
+  // them into one splat rule removes the ambiguity.)
   const segments = event.path.replace(/^\/.netlify\/functions\/page-meta\/?/, '').split('/').filter(Boolean);
-  const mode = segments[0];
-  const id = segments[1];
+  let mode = segments[0];
+  let id = segments[1];
+  if (mode === 'guides' && id) {
+    mode = 'guide'; // /guides/<id> -> detail mode
+  }
 
   let shell;
   try {
