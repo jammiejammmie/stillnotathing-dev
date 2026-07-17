@@ -858,7 +858,7 @@ function openGuide(id) {
     });
   });
 
-  history.pushState({}, '', '/?guide=' + id);
+  history.pushState({}, '', '/guides/' + id);
 }
 
 function showGuideOverlay(data, related) {
@@ -959,7 +959,7 @@ function toggleBookmark(guideId) {
 }
 
 function shareGuide(id, title) {
-  var url = 'https://stillnotathing.com/?guide=' + id;
+  var url = 'https://stillnotathing.com/guides/' + id;
   if (navigator.share) {
     navigator.share({ title: title, url: url });
   } else {
@@ -1344,14 +1344,17 @@ function init() {
 
   // URL params
   var params = new URLSearchParams(window.location.search);
-  var guideParam = params.get('guide');
+  var guideParam = params.get('guide'); // legacy ?guide= links, kept for backward compat
   var tabParam = params.get('tab');
+  var pathMatch = window.location.pathname.match(/^\/guides\/([^\/]+)\/?$/);
+  var pathGuideId = pathMatch ? pathMatch[1] : null;
+  var targetGuideId = pathGuideId || guideParam;
 
-  if (guideParam) {
+  if (targetGuideId) {
     var tryOpen = setInterval(function() {
       if (typeof openGuide === 'function') {
         clearInterval(tryOpen);
-        setTimeout(function() { openGuide(guideParam); }, 300);
+        setTimeout(function() { openGuide(targetGuideId); }, 300);
       }
     }, 100);
   } else if (tabParam) {

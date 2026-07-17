@@ -14,6 +14,18 @@
   force = true
 
 [[redirects]]
+  from = "/guides*"
+  to = "/.netlify/functions/page-meta/guides/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/tools"
+  to = "/.netlify/functions/page-meta/tools"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
