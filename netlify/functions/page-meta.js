@@ -77,9 +77,12 @@ function injectBody(html, ssrHtml) {
 }
 
 exports.handler = async function (event) {
-  const params = event.queryStringParameters || {};
-  const mode = params.mode;
-  const id = params.id;
+  // Routed via netlify.toml as /.netlify/functions/page-meta/<mode>[/<id>]
+  // (path segments, not a query string — a query string appended to a
+  // redirect's "to" target was silently ignored by Netlify's rewrite engine).
+  const segments = event.path.replace(/^\/.netlify\/functions\/page-meta\/?/, '').split('/').filter(Boolean);
+  const mode = segments[0];
+  const id = segments[1];
 
   let shell;
   try {

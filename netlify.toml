@@ -15,19 +15,19 @@
 
 [[redirects]]
   from = "/guides/:id"
-  to = "/.netlify/functions/page-meta?mode=guide&id=:id"
+  to = "/.netlify/functions/page-meta/guide/:id"
   status = 200
   force = true
 
 [[redirects]]
   from = "/guides"
-  to = "/.netlify/functions/page-meta?mode=guides"
+  to = "/.netlify/functions/page-meta/guides"
   status = 200
   force = true
 
 [[redirects]]
   from = "/tools"
-  to = "/.netlify/functions/page-meta?mode=tools"
+  to = "/.netlify/functions/page-meta/tools"
   status = 200
   force = true
 
