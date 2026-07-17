@@ -14,8 +14,8 @@
   force = true
 
 [[redirects]]
-  from = "/guides/:id"
-  to = "/.netlify/functions/page-meta/guide/:id"
+  from = "/guides/*"
+  to = "/.netlify/functions/page-meta/guide/:splat"
   status = 200
   force = true
 
