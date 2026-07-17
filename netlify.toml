@@ -17,16 +17,19 @@
   from = "/guides/:id"
   to = "/.netlify/functions/page-meta?mode=guide&id=:id"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/guides"
   to = "/.netlify/functions/page-meta?mode=guides"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/tools"
   to = "/.netlify/functions/page-meta?mode=tools"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
