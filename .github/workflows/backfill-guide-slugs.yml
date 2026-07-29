@@ -1,0 +1,130 @@
+name: Backfill Guide Slugs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Backfill missing/duplicate guide slugs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          cat > backfill.js << 'JSEOF'
+          const https = require('https');
+
+          function httpFetch(url, opts) {
+            opts = opts || {};
+            return new Promise(function(resolve, reject) {
+              var u = new URL(url);
+              var req = https.request({
+                hostname: u.hostname,
+                path: u.pathname + u.search,
+                method: opts.method || 'GET',
+                headers: opts.headers || {}
+              }, function(res) {
+                var body = '';
+                res.on('data', function(c) { body += c; });
+                res.on('end', function() {
+                  resolve({ ok: res.statusCode < 400, status: res.statusCode, text: body });
+                });
+              });
+              req.on('error', reject);
+              if (opts.body) req.write(opts.body);
+              req.end();
+            });
+          }
+
+          function slugify(title) {
+            return (title || '')
+              .toLowerCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '');
+          }
+
+          function patchSlug(id, slug) {
+            var body = JSON.stringify({ slug: slug });
+            return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides?id=eq.' + id, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+                'Prefer': 'return=minimal',
+                'Content-Length': Buffer.byteLength(body).toString()
+              },
+              body: body
+            });
+          }
+
+          async function main() {
+            var res = await httpFetch(
+              process.env.SUPABASE_URL + '/rest/v1/guides?select=id,title,slug,published_at&order=id.asc',
+              {
+                headers: {
+                  'apikey': process.env.SUPABASE_SERVICE_KEY,
+                  'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
+                }
+              }
+            );
+            if (!res.ok) {
+              console.error('Fetch failed:', res.status, res.text);
+              process.exit(1);
+            }
+            var rows = JSON.parse(res.text);
+            console.log('Total guides:', rows.length);
+
+            // 1. Null/empty slug 채우기 대상 표시
+            var nullCount = 0;
+            rows.forEach(function(r) {
+              if (!r.slug || !r.slug.trim()) {
+                nullCount++;
+                r._generated = slugify(r.title) || ('guide-' + r.id);
+              }
+            });
+            console.log('Null/empty slug rows:', nullCount);
+
+            // 2. 최종 슬러그값(기존 값 또는 방금 생성한 값) 기준으로 중복 탐지
+            //    같은 슬러그를 가진 그룹에서 가장 이른 id(=먼저 만들어진 글)만 그대로 두고
+            //    나머지는 '-{id}'를 붙여 고유하게 만든다.
+            var groups = {};
+            rows.forEach(function(r) {
+              var s = r._generated || r.slug;
+              (groups[s] = groups[s] || []).push(r);
+            });
+
+            var updates = [];
+            Object.keys(groups).forEach(function(s) {
+              var group = groups[s];
+              group.sort(function(a, b) { return a.id - b.id; });
+              group.forEach(function(r, i) {
+                var finalSlug = s;
+                if (i > 0) finalSlug = s + '-' + r.id; // 중복 그룹의 2번째부터 접미사
+                if (r._generated || finalSlug !== r.slug) {
+                  updates.push({ id: r.id, title: r.title, oldSlug: r.slug || null, newSlug: finalSlug, reason: r._generated ? 'missing' : 'duplicate' });
+                }
+              });
+            });
+
+            console.log('Rows to update:', updates.length);
+            console.log(JSON.stringify(updates, null, 2));
+
+            for (var i = 0; i < updates.length; i++) {
+              var u = updates[i];
+              var pr = await patchSlug(u.id, u.newSlug);
+              if (!pr.ok) {
+                console.error('PATCH failed for id=' + u.id + ':', pr.status, pr.text);
+              } else {
+                console.log('Updated id=' + u.id + ' (' + u.reason + '): "' + (u.oldSlug || '(none)') + '" -> "' + u.newSlug + '"');
+              }
+            }
+
+            console.log('---SUMMARY---');
+            console.log('total=' + rows.length + ' missing=' + nullCount + ' updated=' + updates.length);
+          }
+
+          main().catch(function(e) { console.error(e); process.exit(1); });
+          JSEOF
+          node backfill.js
