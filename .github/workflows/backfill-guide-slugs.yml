@@ -61,7 +61,7 @@ jobs:
 
           async function main() {
             var res = await httpFetch(
-              process.env.SUPABASE_URL + '/rest/v1/guides?select=id,title,slug,published_at&order=id.asc',
+              process.env.SUPABASE_URL + '/rest/v1/guides?select=id,title,slug&order=id.asc',
               {
                 headers: {
                   'apikey': process.env.SUPABASE_SERVICE_KEY,
