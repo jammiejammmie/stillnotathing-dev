@@ -659,7 +659,7 @@ function renderGuideCard(g) {
   var tags = (g.tags || []).map(function(tag) {
     return '<span class="tag" style="background:rgba(0,212,170,.06);color:var(--muted)">#' + tag + '</span>';
   }).join('');
-  return '<div class="guide-card" onclick="openGuide(\'' + g.id + '\')">' +
+  return '<div class="guide-card" onclick="openGuide(\'' + g.slug + '\')">' +
     '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
       '<span class="tag" style="background:rgba(124,92,252,.08);color:var(--accent2)">' + (g.category || 'guide') + '</span>' +
       '<span style="font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted)">' + (g.read_time || '5 min read') + '</span>' +
@@ -809,13 +809,13 @@ function renderMineTab() {
   if (currentUser && bookmarkIds.length) {
     var ids = bookmarkIds.map(function(b) { return b.replace('guide_',''); }).filter(function(b) { return b.length > 10; });
     if (ids.length) {
-      sb.from('guides').select('id,title,read_time').in('id', ids)
+      sb.from('guides').select('id,slug,title,read_time').in('id', ids)
       .then(function(res) {
         var data = res.data || [];
         var inner = document.getElementById('bookmarks-inner');
         if (inner) {
           inner.innerHTML = data.map(function(g) {
-            return '<div onclick="openGuide(\'' + g.id + '\')" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">' +
+            return '<div onclick="openGuide(\'' + g.slug + '\')" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">' +
               '<div style="font-size:.82rem;font-weight:600">' + g.title + '</div>' +
               '<div style="font-size:.68rem;color:var(--muted)">' + (g.read_time||'5 min') + ' read →</div>' +
             '</div>';
@@ -835,30 +835,30 @@ function renderMineTab() {
 // ════════════════════════════════════════
 // GUIDE DETAIL
 // ════════════════════════════════════════
-function openGuide(id) {
-  sb.from('guides').select('*').eq('id', id).single().then(function(res) {
+function openGuide(slug) {
+  sb.from('guides').select('*').eq('slug', slug).single().then(function(res) {
     var data = res.data;
     if (!data) return;
 
-    // Mark as read
+    // Mark as read (실제 DB id로 추적 — reads_ 저장 형식은 그대로 유지)
     if (currentUser) {
       var key = 'reads_' + currentUser.id;
       try {
         var reads = JSON.parse(localStorage.getItem(key) || '[]');
-        if (reads.indexOf(id) === -1) reads.push(id);
+        if (reads.indexOf(data.id) === -1) reads.push(data.id);
         localStorage.setItem(key, JSON.stringify(reads));
         checkAchievements(currentUser.id);
       } catch(e) {}
     }
 
     // Related guides
-    sb.from('guides').select('id,title,description,read_time').eq('category', data.category).neq('id', id).order('created_at', {ascending:false}).limit(3)
+    sb.from('guides').select('id,slug,title,description,read_time').eq('category', data.category).neq('id', data.id).order('created_at', {ascending:false}).limit(3)
     .then(function(res2) {
       showGuideOverlay(data, res2.data || []);
     });
   });
 
-  history.pushState({}, '', '/guides/' + id);
+  history.pushState({}, '', '/guides/' + slug);
 }
 
 function showGuideOverlay(data, related) {
@@ -875,7 +875,7 @@ function showGuideOverlay(data, related) {
   }).join('');
 
   var relatedHTML = related.map(function(r) {
-    return '<div onclick="closeGuide();setTimeout(function(){openGuide(\'' + r.id + '\')},100)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer">' +
+    return '<div onclick="closeGuide();setTimeout(function(){openGuide(\'' + r.slug + '\')},100)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer">' +
       '<div style="font-size:.8rem;font-weight:600;margin-bottom:2px">' + r.title + '</div>' +
       '<div style="font-size:.68rem;color:var(--muted)">' + (r.read_time||'5 min') + ' read →</div>' +
     '</div>';
@@ -886,7 +886,7 @@ function showGuideOverlay(data, related) {
       '<button onclick="closeGuide()" class="btn btn-secondary" style="font-size:.75rem">← Back</button>' +
       '<div style="display:flex;gap:7px">' +
         '<button onclick="toggleBookmark(\'' + data.id + '\')" class="btn btn-secondary" id="bookmark-btn-' + data.id + '" style="font-size:.75rem">' + (isBookmarked ? '🔖 Saved' : '🔖 Save') + '</button>' +
-        '<button onclick="shareGuide(\'' + data.id + '\',\'' + escAttr(data.title) + '\')" class="btn btn-secondary" style="font-size:.75rem">↗ Share</button>' +
+        '<button onclick="shareGuide(\'' + data.slug + '\',\'' + escAttr(data.title) + '\')" class="btn btn-secondary" style="font-size:.75rem">↗ Share</button>' +
       '</div>' +
     '</div>' +
     '<div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">' +
@@ -903,7 +903,7 @@ function showGuideOverlay(data, related) {
       '<a href="/calc.html" style="background:var(--accent);color:#000;padding:6px 14px;border-radius:6px;font-size:.75rem;font-weight:700;text-decoration:none;display:inline-block">Try Stack Calculator →</a>' +
     '</div>' +
     '<div style="text-align:center;padding-top:12px;border-top:1px solid var(--border)">' +
-      '<button onclick="shareGuide(\'' + data.id + '\',\'' + escAttr(data.title) + '\')" class="btn btn-primary" style="font-size:.8rem">↗ Share this guide</button>' +
+      '<button onclick="shareGuide(\'' + data.slug + '\',\'' + escAttr(data.title) + '\')" class="btn btn-primary" style="font-size:.8rem">↗ Share this guide</button>' +
     '</div>' +
   '</div>';
 
@@ -958,8 +958,8 @@ function toggleBookmark(guideId) {
   } catch(e) {}
 }
 
-function shareGuide(id, title) {
-  var url = 'https://stillnotathing.com/guides/' + id;
+function shareGuide(slug, title) {
+  var url = 'https://stillnotathing.com/guides/' + slug;
   if (navigator.share) {
     navigator.share({ title: title, url: url });
   } else {
@@ -1007,7 +1007,7 @@ function showPainDetail(toolName, rage, rageNote) {
   overlay.addEventListener('click', function(e) { if (e.target === overlay) closePainDetail(); });
 
   // Load related guides
-  sb.from('guides').select('id,title,read_time').ilike('title', '%' + toolName + '%').order('created_at', {ascending:false}).limit(3)
+  sb.from('guides').select('id,slug,title,read_time').ilike('title', '%' + toolName + '%').order('created_at', {ascending:false}).limit(3)
   .then(function(res) {
     var pgc = document.getElementById('pain-guides-container');
     if (!pgc) return;
@@ -1015,7 +1015,7 @@ function showPainDetail(toolName, rage, rageNote) {
     if (!data.length) { pgc.innerHTML = '<div style="font-size:.78rem;color:var(--muted);text-align:center;padding:8px">No guides yet for ' + toolName + '. Check back soon!</div>'; return; }
     pgc.innerHTML = '<div style="font-family:JetBrains Mono,monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">📖 Related guides</div>' +
       data.map(function(g) {
-        return '<div onclick="closePainDetail();openGuide(\'' + g.id + '\')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px;margin-bottom:6px;cursor:pointer">' +
+        return '<div onclick="closePainDetail();openGuide(\'' + g.slug + '\')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px;margin-bottom:6px;cursor:pointer">' +
           '<div style="font-size:.8rem;font-weight:600;margin-bottom:2px">' + g.title + '</div>' +
           '<div style="font-size:.65rem;color:var(--muted)">' + (g.read_time||'5 min') + ' read →</div>' +
         '</div>';

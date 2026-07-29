@@ -143,7 +143,15 @@ jobs:
             });
           }
 
+          // 2026-07-29: URL이 id(UUID)에서 slug로 바뀌면서 guides.slug가 NOT NULL+UNIQUE가 됨.
+          // 사전 조회 없이도 고유성을 보장하기 위해 짧은 타임스탬프 접미사를 항상 붙인다.
+          function slugify(title) {
+            var base = (title || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            return (base || 'guide') + '-' + Date.now().toString(36).slice(-6);
+          }
+
           function saveArticle(article) {
+            article = Object.assign({}, article, { slug: slugify(article.title) });
             var body = JSON.stringify(article);
             return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides', {
               method: 'POST',

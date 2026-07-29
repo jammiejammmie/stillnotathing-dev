@@ -89,7 +89,17 @@ jobs:
             }).then(function(r) { return r.json(); }).then(function(d) { return d.content[0].text; });
           }
 
+          // 2026-07-29: URL이 id(UUID)에서 slug로 바뀌면서 guides.slug가 NOT NULL+UNIQUE가 됨.
+          // 여기서 매번 고정된 소수의 주제가 반복 생성되므로(guides[today % guides.length] 등)
+          // title만으로 슬러그를 만들면 거의 매번 충돌한다 - 항상 짧은 타임스탬프 접미사를 붙여
+          // 사전 조회 없이도 고유성을 보장한다.
+          function slugify(title) {
+            var base = (title || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            return (base || 'guide') + '-' + Date.now().toString(36).slice(-6);
+          }
+
           function saveGuide(article) {
+            article = Object.assign({}, article, { slug: slugify(article.title) });
             var body = JSON.stringify(article);
             return httpFetch(process.env.SUPABASE_URL + '/rest/v1/guides', {
               method: 'POST',

@@ -361,7 +361,8 @@ async function publishArticle() {
   const category = document.getElementById('art-category').value;
   const read_time = document.getElementById('art-readtime').value.trim() || '5 min read';
   if (!title || !description) { toast('Title and description required'); return; }
-  await sb.from('guides').insert({ title, description, content, category, read_time });
+  const slug = (title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'guide') + '-' + Date.now().toString(36).slice(-6);
+  await sb.from('guides').insert({ title, description, content, category, read_time, slug });
   toast('Article published! 🎉');
   document.getElementById('art-title').value = '';
   document.getElementById('art-desc').value = '';

@@ -35,15 +35,30 @@ function mdToHtml(md) {
     .join('');
 }
 
-async function fetchGuide(id) {
+async function fetchGuideBySlug(slug) {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/guides?id=eq.${encodeURIComponent(id)}&select=*`,
+    `${SUPABASE_URL}/rest/v1/guides?slug=eq.${encodeURIComponent(slug)}&select=*`,
     { headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` } }
   );
   if (!res.ok) return null;
   const rows = await res.json();
   return rows[0] || null;
 }
+
+// 2026-07-29 이전 발행된 링크(SNS/외부 백링크/GSC 색인)가 여전히 UUID 경로를 가리키므로,
+// 구 URL을 위해 id로도 조회할 수 있게 남겨둔다(301 리다이렉트 전용, 신규 링크 생성에는 안 씀).
+async function fetchGuideById(id) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/guides?id=eq.${encodeURIComponent(id)}&select=id,slug`,
+    { headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` } }
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return rows[0] || null;
+}
+
+// guides.id는 UUID(gen_random_uuid()) 형식 — 이 패턴이면 구 URL로 간주해 slug로 301 리다이렉트한다.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function getShellHtml(event) {
   // Fetch the shell from the requesting deploy's own host (prod or a deploy
@@ -86,9 +101,23 @@ exports.handler = async function (event) {
   // them into one splat rule removes the ambiguity.)
   const segments = event.path.replace(/^\/.netlify\/functions\/page-meta\/?/, '').split('/').filter(Boolean);
   let mode = segments[0];
-  let id = segments[1];
-  if (mode === 'guides' && id) {
-    mode = 'guide'; // /guides/<id> -> detail mode
+  let param = segments[1];
+  if (mode === 'guides' && param) {
+    mode = 'guide'; // /guides/<slug|legacy-uuid> -> detail mode
+  }
+
+  // 구 UUID URL(id=eq...) — slug로 301 리다이렉트. 신규 URL(slug)은 UUID 형식이 아니므로 여기 안 걸림.
+  if (mode === 'guide' && param && UUID_RE.test(param)) {
+    let legacy = null;
+    try {
+      legacy = await fetchGuideById(param);
+    } catch (e) {
+      console.error('fetchGuideById error:', e.message);
+    }
+    if (legacy && legacy.slug) {
+      return { statusCode: 301, headers: { Location: `/guides/${legacy.slug}` }, body: '' };
+    }
+    // id는 UUID 형식인데 그 id를 가진 글 자체가 없으면(삭제됨 등) 그대로 404로 흘려보낸다.
   }
 
   let shell;
@@ -98,19 +127,19 @@ exports.handler = async function (event) {
     return { statusCode: 502, headers: { 'Content-Type': 'text/plain' }, body: `Shell fetch error: ${e.message}` };
   }
 
-  if (mode === 'guide' && id) {
+  if (mode === 'guide' && param) {
     let guide = null;
     try {
-      guide = await fetchGuide(id);
+      guide = await fetchGuideBySlug(param);
     } catch (e) {
-      console.error('fetchGuide error:', e.message);
+      console.error('fetchGuideBySlug error:', e.message);
     }
 
     if (!guide) {
       return { statusCode: 404, headers: { 'Content-Type': 'text/html; charset=UTF-8', 'X-Robots-Tag': 'noindex' }, body: shell };
     }
 
-    const url = `${SITE_URL}/guides/${guide.id}`;
+    const url = `${SITE_URL}/guides/${guide.slug}`;
     const title = `${guide.title} — StillNotAThing`;
     const description = guide.description || guide.title;
     const image = `${SITE_URL}/.netlify/functions/og-image?type=guide&title=${encodeURIComponent(guide.title || '')}`;

@@ -18,7 +18,7 @@ exports.handler = async function(event, context) {
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/guides?select=id,created_at&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/guides?select=slug,created_at&order=created_at.desc`,
       { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` } }
     );
 
@@ -46,9 +46,9 @@ exports.handler = async function(event, context) {
     `  <url>\n    <loc>${SITE_URL}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>`,
     `  <url>\n    <loc>${SITE_URL}/tools</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>`,
     `  <url>\n    <loc>${SITE_URL}/guides</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>`,
-    ...guides.map((guide) => {
+    ...guides.filter((guide) => guide.slug).map((guide) => {
       const lastmod = new Date(guide.created_at).toISOString().split('T')[0];
-      return `  <url>\n    <loc>${SITE_URL}/guides/${escapeXml(guide.id)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`;
+      return `  <url>\n    <loc>${SITE_URL}/guides/${escapeXml(guide.slug)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`;
     })
   ];
 

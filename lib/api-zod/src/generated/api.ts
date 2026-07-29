@@ -172,10 +172,10 @@ export const CreateGuideBody = zod.object({
 
 
 /**
- * @summary Get a single guide
+ * @summary Get a single guide by slug
  */
 export const GetGuideParams = zod.object({
-  "id": zod.coerce.number()
+  "slug": zod.string()
 })
 
 export const GetGuideResponse = zod.object({

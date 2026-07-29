@@ -82,13 +82,13 @@ router.get("/guides/daily", async (req, res) => {
   }
 });
 
-router.get("/guides/:id", async (req, res) => {
+router.get("/guides/:slug", async (req, res) => {
   try {
-    const params = GetGuideParams.parse({ id: Number(req.params.id) });
+    const params = GetGuideParams.parse({ slug: req.params.slug });
     const [guide] = await db
       .select()
       .from(guidesTable)
-      .where(eq(guidesTable.id, params.id));
+      .where(eq(guidesTable.slug, params.slug));
     if (!guide) return res.status(404).json({ error: "Guide not found" });
     res.json({ ...guide, publishedAt: guide.publishedAt.toISOString() });
   } catch (err) {

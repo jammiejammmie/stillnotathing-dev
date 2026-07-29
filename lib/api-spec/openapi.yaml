@@ -170,17 +170,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/Guide"
 
-  /guides/{id}:
+  /guides/{slug}:
     get:
       operationId: getGuide
       tags: [guides]
-      summary: Get a single guide
+      summary: Get a single guide by slug
       parameters:
-        - name: id
+        - name: slug
           in: path
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         "200":
           description: Guide details
